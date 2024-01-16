@@ -1,0 +1,274 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #e0c3c5;
+    display: flex;
+    width: 100%;
+}
+
+.header {
+    background-color: #e0c3c5;
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header-sub {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.tab-selection {
+    display: flex;
+    justify-content: left;
+    background-color: #cb7086;
+}
+
+.action_buttons {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+}
+
+.tab-button {
+    background-color: transparent;
+    color: #fff;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid black;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+.tab-button:not(:disabled):hover {
+    background-color: #7d545e;
+    border: 1px dashed black;
+}
+
+.tab-button:disabled{
+    cursor: default;
+    background-color: #734752;
+}
+
+.action-button {
+    margin-left: 5px;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    background-color: #cb7086;
+    color: #fff;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid black;
+    box-shadow: 2px 1px 1px black;
+    transition: background-color 0.3s;
+}
+
+.action-button:hover{
+    background-color: #7d545e;
+}
+
+.block-display {
+    display: flex;
+    justify-content: left;
+    background-color: white;
+    gap: 20px;
+    padding: 10px 20px;
+    min-height: 100px;
+}
+
+.block {
+    width: 100px;
+    height: 100px;
+    background-color: #cb7086;
+    color: #fff;
+    cursor: pointer;
+    transition: left 0.2s, top 0.2s, transform 1s;
+    border: 3px solid black;
+}
+
+.flash_transition {
+    transform: rotate3d(0, 1, 0, 360deg);
+}
+
+/* TODO fix when expanding, thes block moving back is a bit weird */
+.workspace {
+    position: relative;
+    margin: 10px 20px;
+    height: 55vh;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: scroll;
+}
+
+#work_area {
+    flex: 2;
+}
+
+#virtual {
+    transition: flex 0.3s;
+    flex: 0;
+    background-color: white;
+    margin: 20px;
+    margin-bottom: 20px;
+}
+
+.expanded {
+    flex: 1 !important;
+}
+
+.virtual_toggle {
+    position: absolute;
+    top: 50%;
+    right: 2px;
+    transform: translateY( -50%);
+    width: 40px;
+    height: 40px;
+    background-color: #cb7086;
+    border-radius: 50%;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.arrow {
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 15px solid white;
+    transform: rotate(90deg);
+    transition: transform 0.3s;
+}
+
+.arrow.expanded {
+    transform: rotate(270deg);
+}
+
+.tile_img, .block_image {
+    width: 100%;
+    height: 100%;
+}
+
+#console {
+    position: relative;
+    margin: 20px;
+    height: 10vh;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: scroll;
+    color: #cb7086;
+    font-size: 20px;
+}
+
+#grid_house{
+    width: 90%;
+    margin: 10px auto;  
+    background-color: white;
+    transition: all 0.1s;
+    border: 5px solid #cb7086;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Style the individual grid cells */
+#grid_house > div {
+    background-color: white; /* Cell background color */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #000; /* Optional cell border */
+    aspect-ratio: 1; /* Make each cell a square */
+  }
+
+#virtual:not(.expanded) > #grid_house {
+    display: none;
+}
+
+.selector {
+    visibility: hidden;
+    z-index: 3;
+    background-color: transparent;
+    position: absolute;
+    transition: all 2s ease-in-out;
+}
+
+#horizontal_selector {
+    z-index: 11;
+    width: 100%;
+    height: 20%;
+    left: 0;
+    top: 0;
+    border-top: 3px solid black;
+    border-bottom: 3px solid black;
+}
+
+#vertical_selector {
+    z-index: 11;
+    width: 20%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    border-left: 3px solid black;
+    border-right: 3px solid black;
+}
+
+#overlay {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Grey overlay */
+    z-index: 10; /* Below the highlighted element */
+}
+
+.text-bubble {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: none; /* Initially hidden */
+    z-index: 12; /* Ensure it's above other elements */
+    max-width: 30%;
+}
+
+
+.smiley {
+    left: 500px;
+    top: 500px;
+    z-index: 2;
+    width: 50px;
+    height: 50px;
+    background-color: yellow;
+    border-radius: 50%;
+    position: absolute;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    user-select: none;
+    cursor: pointer;
+}
+
+.smiley::before {
+    content: ':)';
+    position: absolute;
+}
