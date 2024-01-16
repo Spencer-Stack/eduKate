@@ -1,0 +1,4 @@
+start_doll pink pink pink
+blank blank blank blank
+pink pink pink blank
+blank blank blank blank
