@@ -14,7 +14,7 @@ class VisualController {
         this.initializeActionButtons();
 
         this.block_size = 100; // Size of the blocks
-        this.snap_threshold = 0.5;
+        this.snap_threshold = 1;
 
         // Keep track of what is snapped where so double snapping doesnt work
         // Each block that is created has an id: (left:, right:)
@@ -28,6 +28,12 @@ class VisualController {
         this.ver_sel = $('#vertical_selector');
         this.sel_target = null;
         // this.introSequence();
+
+        // document.onmousemove = function(e){
+        //     var x = e.pageX;
+        //     var y = e.pageY;
+        //     console.log(x, y);
+        // };
     }
 
     introSequence(){
@@ -168,20 +174,33 @@ class VisualController {
         let right_min_dist = 1000;
         let right_info = {"btm": null, "block": null};
 
+        console.error("");
+        console.error(dropX, dropY);
+
         for (var id in this.blocks){
             let block = this.blocks[id];
             if (block.id !== blockToMove.id) {
                 let leftX = block.x;
                 let rightX = block.x + this.block_size;
-                let height = block.y + this.block_size / 2;
+                let height = block.y;
 
-                let dxLeft = leftX - dropX - this.block_size / 2;
-                let dxRight = rightX - dropX - this.block_size / 2;
-                let dxVert = height - dropY - this.block_size / 2;
+                let dxLeft = leftX - (dropX + this.block_size / 2);
+                let dxRight = rightX - (dropX + this.block_size / 2);
+                let dxVert = height - dropY;
 
                 let threshold = this.block_size * this.snap_threshold;
+
+
                 let left_dist = Math.sqrt(dxLeft * dxLeft + dxVert * dxVert);
                 let right_dist = Math.sqrt(dxRight * dxRight + dxVert * dxVert);
+                console.error("");
+
+                console.error("left right y: ", leftX, rightX, height);
+                console.error('threshold', threshold);
+                console.error('dxleft, dxright, dxvert', dxLeft, dxRight, dxVert);
+                console.error('left_d, right_d', left_dist, right_dist);
+
+
                 if (left_dist < threshold && left_dist < left_min_dist) {
                     did_snap = true;
                     left_min_dist = left_dist;
@@ -197,6 +216,8 @@ class VisualController {
                 }
             }
         }
+
+        console.error(left_info, right_info);
 
         // If not snapped to either side, update the position to the drop location
         if (!did_snap) {
