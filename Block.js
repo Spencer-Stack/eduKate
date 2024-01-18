@@ -11,6 +11,7 @@ class Block {
     }
 
     createBlockElement() {
+        // minor change
         const blockElement = $('<div>')
             .addClass('block')
             .attr('draggable', 'true')
