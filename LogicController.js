@@ -55,6 +55,39 @@ class LogicController {
         this.all_block_set_hosts = [];
     }
 
+    // this checks to make sure the syntax of the loops is correct
+    loopCheck(start_block_id, blocks, snaps){
+        let next = start_block_id;
+        let block = null;
+
+        // cant dip below 0, can't end on anything but 0
+        let running_loop_count = 0;
+
+        while (next != null){
+            block = blocks[next];
+            let block_snap = snaps[block.id];
+            next = block_snap['right'];
+
+            if (block.block_type.name == "start_loop"){
+                running_loop_count += 1;
+            } else if (block.block_type.name == "end_loop"){
+                running_loop_count -= 1;
+            }
+
+            if (running_loop_count < 0){
+                alert("There is a loop finish block incorrectly before a loop start block");
+                return false;
+            }
+        }
+
+        if (running_loop_count > 0){
+            alert("There are more loop start blocks that loop finish blocks");
+            return false;
+        }
+
+        return true;
+    }
+
     // given a list of visual blocks and their snaps, build out all of the blocksets and logic blocks
     parseVisual(blocks, snaps){
         // this is a list of blocksets, they act as scopes for blocks
@@ -75,6 +108,11 @@ class LogicController {
 
         if (start_block == null){
             alert("no start block found");
+            return;
+        }
+
+        let loops_fine = this.loopCheck(start_block.id, blocks, snaps);
+        if (!loops_fine){
             return;
         }
 

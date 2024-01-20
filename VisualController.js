@@ -14,7 +14,9 @@ class VisualController {
         this.initializeActionButtons();
 
         this.block_size = 100; // Size of the blocks
-        this.snap_threshold = 1;
+        this.snap_threshold = 1.5;
+        this.top_threshold = this.block_size / 1.5;
+        this.overlap_threshold = 0.7;
 
         // Keep track of what is snapped where so double snapping doesnt work
         // Each block that is created has an id: (left:, right:)
@@ -28,12 +30,6 @@ class VisualController {
         this.ver_sel = $('#vertical_selector');
         this.sel_target = null;
         // this.introSequence();
-
-        // document.onmousemove = function(e){
-        //     var x = e.pageX;
-        //     var y = e.pageY;
-        //     console.log(x, y);
-        // };
     }
 
     introSequence(){
@@ -138,6 +134,8 @@ class VisualController {
 
                     this.workspace.append(newBlock.element);
                     this.block_id += 1;
+
+                    console.log(this.snapped_connections);
                 }
 
                 // Reset dragging_block to null and offset to zero
@@ -161,21 +159,78 @@ class VisualController {
         if (block) {
             block.element.remove();
             delete this.blocks[blockId];
+            this.leftSnapCheck(this.snapped_connections[blockId], null, null);
             this.resetSnaps(blockId);
         }
     }
+
+    calculateOverlap(drop, element) {        
+        // Extracting left and top values from the points
+        var left1 = drop[0], top1 = drop[1];
+        var left2 = element[0], top2 = element[1];
+    
+        // Calculate the right and bottom edges of the first square
+        var right1 = left1 + this.block_size;
+        var bottom1 = top1 + this.block_size;
+    
+        // Calculate the right and bottom edges of the second square
+        var right2 = left2 + this.block_size;
+        var bottom2 = top2 + this.block_size;
+    
+        // Check if the squares are not overlapping
+        if (right1 <= left2 || left1 >= right2 || bottom1 <= top2 || top1 >= bottom2) {
+            return 0; // The squares are not overlapping
+        }
+
+        let width = Math.abs(left1 - left2);
+        let height = Math.abs(top1 - top2);
+
+        let dx = this.block_size - width;
+        let dy = this.block_size - height;
+
+        return (dx * dy) / (this.block_size * this.block_size);
+    }
+
+    // sets the snaps of the left block to the snaps of the right block
+    setSnaps(blockToMove, block){
+        let block_snaps = this.snapped_connections[block.id];
+        let left_snap = block_snaps["left"];
+        let right_snap = block_snaps["right"];
+
+        // set the left side
+        if (left_snap != null){
+            this.snapped_connections[left_snap]["right"] = blockToMove.id;
+            this.snapped_connections[blockToMove.id]["left"] = left_snap;
+        }
+        if (right_snap != null){
+            this.snapped_connections[right_snap]["left"] = blockToMove.id;
+            this.snapped_connections[blockToMove.id]["right"] = right_snap;
+        }
+    }
+
+    swapFromOverlap(blockToMove, block){
+        // this means the blockToMove was a significant portion of the block overlapping
+        // move the blockToMove where the block is, update the snaps, and move the block out and reset its snaps
+
+        // do the movement first
+        blockToMove.updatePosition(block.x, block.y); // move block to where it goes
+        block.updatePosition(block.x, block.y - this.block_size - 10); // move up
+
+        // now do the snap logic (replacing basically)
+        this.setSnaps(blockToMove, block);
+        this.resetSnaps(block.id);
+    }
+    
 
     // Snap the block to an existing block's left or right
     // TODO determine if its worth it to show when two blocks can snap continuously
     snapToExistingBlock(blockToMove, dropX, dropY) {
         let did_snap = false;
-        let left_min_dist = 1000;
-        let left_info = {"btm": null, "block": null};
-        let right_min_dist = 1000;
-        let right_info = {"btm": null, "block": null};
+        let left_overlap = null;
+        let right_overlap = null;
 
-        console.error("");
-        console.error(dropX, dropY);
+        let dropXLeft = dropX;
+        let dropXRight = dropX + this.block_size;
 
         for (var id in this.blocks){
             let block = this.blocks[id];
@@ -184,40 +239,68 @@ class VisualController {
                 let rightX = block.x + this.block_size;
                 let height = block.y;
 
-                let dxLeft = leftX - (dropX + this.block_size / 2);
-                let dxRight = rightX - (dropX + this.block_size / 2);
-                let dxVert = height - dropY;
+                let overlap = this.calculateOverlap([dropX, dropY], [block.x, block.y]);
 
-                let threshold = this.block_size * this.snap_threshold;
-
-
-                let left_dist = Math.sqrt(dxLeft * dxLeft + dxVert * dxVert);
-                let right_dist = Math.sqrt(dxRight * dxRight + dxVert * dxVert);
-                console.error("");
-
-                console.error("left right y: ", leftX, rightX, height);
-                console.error('threshold', threshold);
-                console.error('dxleft, dxright, dxvert', dxLeft, dxRight, dxVert);
-                console.error('left_d, right_d', left_dist, right_dist);
-
-
-                if (left_dist < threshold && left_dist < left_min_dist) {
-                    did_snap = true;
-                    left_min_dist = left_dist;
-                    left_info["btm"] = blockToMove;
-                    left_info["block"] = block;
+                if (overlap > this.overlap_threshold){
+                    // indicates a block should be swapped
+                    this.swapFromOverlap(blockToMove, block);
+                    return;
                 }
 
-                if (right_dist < threshold && right_dist < right_min_dist) {
+                let dxVert = height - dropY;
+                if (Math.abs(dxVert) > this.top_threshold){
+                    // too far up or down
+                    continue;
+                }
+
+                if (leftX < dropXLeft && dropXLeft < rightX){
+                    // left overlap
+                    left_overlap = block;
                     did_snap = true;
-                    right_min_dist = right_dist;
-                    right_info["btm"] = blockToMove;
-                    right_info["block"] = block;
+                }
+
+                if (leftX < dropXRight && dropXRight < rightX){
+                    // left overlap
+                    right_overlap = block;
+                    did_snap = true;
                 }
             }
         }
 
-        console.error(left_info, right_info);
+        let threshold = this.snap_threshold * this.block_size;
+
+        // if both are null, then go and check thresholds for distance
+        if (left_overlap == null && right_overlap == null){
+            let smallest_dist = threshold;
+            let best_block = null;
+            for (var id in this.blocks){
+                let block = this.blocks[id];
+                if (block.id !== blockToMove.id) {
+                    let dxLeft = block.x - dropX;
+                    let dxTop = block.y - dropY;
+                    if (Math.abs(dxTop) < this.top_threshold){
+                        // this means that its either on the left or right of a set of blocks
+                        let dist = Math.sqrt(dxLeft * dxLeft + dxTop * dxTop);
+                        if (dist < threshold && dist < smallest_dist){
+                            smallest_dist = dist;
+                            best_block = block;
+                        }
+                    }
+                }
+            }
+
+            // this means it found a block that suits it, so figure out its side
+            // and set it
+            if (best_block != null){
+                if (best_block.x > dropX){
+                    // the block is on the right, pretend its got a right overlap
+                    right_overlap = best_block;
+                } else{
+                    left_overlap = best_block;
+                }
+                did_snap = true;
+            }
+        }
 
         // If not snapped to either side, update the position to the drop location
         if (!did_snap) {
@@ -226,72 +309,44 @@ class VisualController {
             this.resetSnaps(blockToMove.id);
         } else{
             // one or more of the infos is set
-            if (left_min_dist != 1000){
-                // left is populated
-                left_info["btm"].updatePosition(left_info["block"].x - this.block_size - 1, left_info["block"].y);
+            if (left_overlap != null){
+                blockToMove.updatePosition(left_overlap.x + this.block_size + 1, left_overlap.y);
             }
-            if (right_min_dist != 1000){
-                // right is populated
-                right_info["btm"].updatePosition(right_info["block"].x + this.block_size + 1, right_info["block"].y);
+            if (right_overlap != null){
+                blockToMove.updatePosition(right_overlap.x - this.block_size - 1, right_overlap.y);
             }
-            this.updateSnaps(left_info, right_info);
+            this.updateSnaps(left_overlap, right_overlap, blockToMove);
         }
     }
-
-    // if a block is removed from the left of another block, shift those blocks
-    // over to the left
 
     // left info is the information for what block it is on the left of
     // right info is same for right
-    updateSnaps(left_info, right_info){
-        // if left_info or right_info is null, the other one must be set
-        // and that means its at the end of a line
-        // if they are both set, that means its in the middle of a line
+    updateSnaps(left_overlap, right_overlap, blockToMove){
+        let left_block_id = left_overlap != null ? left_overlap.id : null;
+        let right_block_id = right_overlap != null ? right_overlap.id : null;
+        let old_cons = this.snapped_connections[blockToMove.id];
 
-        let btm_id = null;
-        let old_cons = null;
-        let rb = null;
-        let lb = null;
+        this.resetSnaps(blockToMove.id);
 
-        const updateConnection = (info, side) => {
-            if (info["block"] !== null) {
-                const b_id = info["block"].id;
-                const btm = info["btm"].id;
-                this.snapped_connections[b_id][side] = btm;
-                this.snapped_connections[btm][side === "left" ? "right" : "left"] = b_id;
-            }
+        const updateConnection = (overlap_id, blockToMove_id, side) => {
+            this.snapped_connections[overlap_id][side] = blockToMove_id;
+            this.snapped_connections[blockToMove_id][side === "left" ? "right" : "left"] = overlap_id;
         };
-        if (left_info["block"] === null && right_info["block"] !== null) {
-            // it's at the very right of the line, update accordingly
-            btm_id = right_info["btm"].id;
-            old_cons = this.snapped_connections[btm_id];
-            lb = right_info["block"].id;
-            this.resetSnaps(btm_id);
-            updateConnection(right_info, "right");
-        } else if (left_info["block"] !== null && right_info["block"] === null) {
-            // it's at the very left of the line, update accordingly
-            btm_id = left_info["btm"].id;
-            old_cons = this.snapped_connections[btm_id];
-            rb = left_info["block"].id;
-            this.resetSnaps(btm_id);
-            updateConnection(left_info, "left");
-        } else {
-            // it is in the middle, set them both and then shift
-            btm_id = left_info["btm"].id;
-            old_cons = this.snapped_connections[btm_id];
-            lb = right_info["block"].id;
-            rb = left_info["block"].id;
-            this.resetSnaps(btm_id);
-            updateConnection(right_info, "right");
-            updateConnection(left_info, "left");
 
-            this.shiftBlocks(left_info["block"].id, "right");
+        if (left_overlap != null && right_overlap != null){
+            updateConnection(left_overlap.id, blockToMove.id, 'right');
+            updateConnection(right_overlap.id, blockToMove.id, 'left');
+            this.shiftBlocks(blockToMove.id, "right");
+        } else if (left_overlap == null && right_overlap != null){
+            // its on the end at the left (so the start)
+            updateConnection(right_overlap.id, blockToMove.id, 'left');
+        } else if (left_overlap != null && right_overlap == null){
+            // its on the end at the right
+            updateConnection(left_overlap.id, blockToMove.id, 'right');
         }
 
-        this.leftSnapCheck(old_cons, rb, lb);
+        this.leftSnapCheck(old_cons, right_block_id, left_block_id);
     }
-
-    // TODO make it not move left if it was the first element (most left)
 
     // this also has to refresh the chain
     // rb and lb are where its going now to avoid collapsing when it shouldnt
@@ -302,10 +357,20 @@ class VisualController {
         let l = old_cons["left"];
         let r = old_cons["right"];
 
-        if (l != null && l == lb){
+        console.log("l, r, lb, rb");
+        console.log(l, r, lb, rb);
+
+        // this makes sure that if it was at the start of the block chain, the chain doesnt move left
+        if (l == null){
             return;
         }
 
+        // this makes sure that if doesnt move left if its put back in the same place
+        if (l == lb){
+            return;
+        }
+
+        // this makes sure that its not put back in the same place
         if (r != null && r == rb){
             return;
         }
@@ -368,7 +433,6 @@ class VisualController {
     }
 
     // Initialize action buttons
-    // TODO construct the logic Controller, probably a parser and what not
     initializeActionButtons() {
         let _this = this;
         // Set up the run, stop, save, and load action buttons
