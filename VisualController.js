@@ -134,8 +134,6 @@ class VisualController {
 
                     this.workspace.append(newBlock.element);
                     this.block_id += 1;
-
-                    console.log(this.snapped_connections);
                 }
 
                 // Reset dragging_block to null and offset to zero
@@ -164,6 +162,7 @@ class VisualController {
         }
     }
 
+    // TODO, fix broken logic of a block being swapped out and then running
     calculateOverlap(drop, element) {        
         // Extracting left and top values from the points
         var left1 = drop[0], top1 = drop[1];
@@ -192,20 +191,26 @@ class VisualController {
     }
 
     // sets the snaps of the left block to the snaps of the right block
-    setSnaps(blockToMove, block){
-        let block_snaps = this.snapped_connections[block.id];
+    setSnaps(block1, block2){
+        let block_snaps = this.snapped_connections[block2.id];
         let left_snap = block_snaps["left"];
         let right_snap = block_snaps["right"];
 
+        let old_cons = JSON.parse(JSON.stringify(this.snapped_connections[block1.id]));
+
         // set the left side
-        if (left_snap != null){
-            this.snapped_connections[left_snap]["right"] = blockToMove.id;
-            this.snapped_connections[blockToMove.id]["left"] = left_snap;
+        if (left_snap != null && left_snap != block1.id){
+            this.snapped_connections[left_snap]["right"] = block1.id;
+            this.snapped_connections[block1.id]["left"] = left_snap;
         }
-        if (right_snap != null){
-            this.snapped_connections[right_snap]["left"] = blockToMove.id;
-            this.snapped_connections[blockToMove.id]["right"] = right_snap;
+        if (right_snap != null && right_snap != block1.id){
+            this.snapped_connections[right_snap]["left"] = block1.id;
+            this.snapped_connections[block1.id]["right"] = right_snap;
         }
+
+        // then do a custom left snap check
+        // this one has to do a left move depending on where it originated from
+        this.leftSnapCheckOverlap(old_cons, block2, block1);
     }
 
     swapFromOverlap(blockToMove, block){
@@ -220,7 +225,6 @@ class VisualController {
         this.setSnaps(blockToMove, block);
         this.resetSnaps(block.id);
     }
-    
 
     // Snap the block to an existing block's left or right
     // TODO determine if its worth it to show when two blocks can snap continuously
@@ -354,11 +358,11 @@ class VisualController {
         // check that this block is the left of any other blocks that its now not
         // if so, shift it over to the left
 
+        console.log(old_cons);
+        console.log(rb, lb);
+
         let l = old_cons["left"];
         let r = old_cons["right"];
-
-        console.log("l, r, lb, rb");
-        console.log(l, r, lb, rb);
 
         // this makes sure that if it was at the start of the block chain, the chain doesnt move left
         if (l == null){
@@ -384,11 +388,29 @@ class VisualController {
         }
     }
 
+    // does a check to see where a left move has to start from
+    // an overlapping event
+    // displaced block is the one moved up
+    // db_trigger is the block below that
+    leftSnapCheckOverlap(old_cons, displaced_block, db_trigger){
+        let left_con = old_cons['left'];
+        let right_con = old_cons['right'];
+
+        if (left_con == null || right_con == null){
+            return;
+        }
+
+        this.shiftBlocks(right_con, "left", db_trigger, displaced_block);
+    }
+
     // shift blocks across whenever one is inserted between two blocks
     // block is is the id to start the shifting from
-    shiftBlocks(block_id, dir){
+    shiftBlocks(block_id, dir, trigger=null, displaced_block=null){
         let i = 0;
         while (block_id != null && i < 10){
+            if (block_id === trigger.id){
+                displaced_block.shiftBlock(this.block_size + 1, dir);
+            }
             let block = this.blocks[block_id];
             block.shiftBlock(this.block_size + 1, dir);
             // then find the next block to shift over

@@ -15,8 +15,6 @@ class LogicController {
     }
 
     execute(virtual_controller){
-        console.log(this.block_set);
-        console.log(this.blocks);
         this.block_set.execute(virtual_controller, () => {});
     }
 
@@ -90,6 +88,9 @@ class LogicController {
 
     // given a list of visual blocks and their snaps, build out all of the blocksets and logic blocks
     parseVisual(blocks, snaps){
+        console.log(blocks);
+        console.log(snaps);
+        return;
         // this is a list of blocksets, they act as scopes for blocks
         // when a start loop or if statement is reached, we go into another blockset
         // when it ends, the block set is popped back out of
