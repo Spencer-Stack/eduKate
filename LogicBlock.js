@@ -7,6 +7,11 @@ class LogicBlock {
         this.next = next; // either a logic block or a block_set_host
         this.prev = prev; // either a logic block or a block_set_host
         this.block_type = type;
+        this.executing = true;
+    }
+
+    stopExecution() {
+        this.executing = false;
     }
 
     static constructFromVisual(visual_block, snap){
@@ -17,6 +22,9 @@ class LogicBlock {
     }
 
     execute(virtual_controller, callback){
+        if (!this.executing){
+            return;
+        }
         if (this.block_type.name == "move_right"){
             virtual_controller.moveBaby("right");
         } else if (this.block_type.name == "move_up"){

@@ -7,6 +7,12 @@ class VisualController {
         this.blocks = {};
         this.dragging_block = null; // Initialize dragging_block to null
         this.dragging_block_offset = { x: 0, y: 0 }; // Initialize the offset
+        this.chunk = null;
+
+        this.block_hor_offset = -3;
+
+        // WorkSpace offset vertical
+        this.wsov = this.workspace.offset().top;
 
         // Initialize event handlers
         this.initializeDragAndDrop();
@@ -21,9 +27,6 @@ class VisualController {
         // Keep track of what is snapped where so double snapping doesnt work
         // Each block that is created has an id: (left:, right:)
         this.snapped_connections = {};
-
-        // smiley
-        this.smiley_interval = null;
 
         // selectors
         this.hor_sel = $('#horizontal_selector');
@@ -68,36 +71,39 @@ class VisualController {
         });
     }
 
+    // creates a Block based on an element
+    createBlock(blockType, blockTab, x, y){
+        // Create a new block using the data
+        blockType = new BlockType(blockType); // name of the blocktype
+        const newBlock = new Block(this.block_id, blockType, blockTab, this);
+
+        newBlock.updatePosition(x - this.dragging_block_offset.x, y - this.dragging_block_offset.y);
+
+        this.blocks[this.block_id] = newBlock;
+
+        // Add this block to list of snapped blocks
+        this.snapped_connections[this.block_id] = {"left": null, "right": null};
+        
+        this.workspace.append(newBlock.element);
+
+        this.block_id += 1;
+
+        return newBlock;
+    }
+
     // Initialize drag and drop behavior
     initializeDragAndDrop() {
         let _this = this;
 
-        // Prevent default drag behavior
-        this.workspace.on('dragover', (event) => {
-            event.preventDefault();
-        });
-
-        $('#work_area').on('dragover', (event) => {
-            event.preventDefault();
-        });
-
-        // Handle mouse down event on blocks
-        $('.block').on("mousedown", function (event) {
-            // Calculate the offset between the mouse and the block
-            const offset = $(this).offset();
-            _this.dragging_block_offset.x = event.clientX - offset.left;
-            _this.dragging_block_offset.y = event.clientY - offset.top;
-        });
-
         // Handle the drop event on the document that isnt the workspace
-        $('#work_area').on('drop', (event) => {
+        $('#work_area').on('mouseup', (event) => {
             event.preventDefault();
             if (this.dragging_block) {
                 const dropTarget = $(event.target);
                 // Check if the drop occurred outside the workspace
                 if (!dropTarget.is(this.workspace)) {
                     // Delete the dragging_block if dropped outside the workspace
-                    this.deleteBlock(this.dragging_block.id);
+                    this.deleteChunk();
                     this.dragging_block = null;
                     this.dragging_block_offset = { x: 0, y: 0 };
                 }
@@ -105,64 +111,131 @@ class VisualController {
         });
 
         // Handle the drop event
-        this.workspace.on('drop', (event) => {
+        this.workspace.on('mouseup', (event) => {
             event.preventDefault();
 
             if (this.dragging_block) {
-                // Retrieve data from the dragging_block
-                const blockTab = this.dragging_block.tab;
-                const alreadyInside = this.dragging_block.inside;
-                const blockType = new BlockType(this.dragging_block.block_type); // name of the blocktype
-
                 // Calculate the drop position based on the offset
                 const dropX = event.clientX - this.dragging_block_offset.x;
                 const dropY = event.clientY - this.dragging_block_offset.y;
 
-                if (alreadyInside) {
-                    const blockId = this.dragging_block.id;
-                    let existingBlock = this.blocks[blockId];
-                    this.snapToExistingBlock(existingBlock, dropX, dropY);
-                } else {
-                    // Create a new block using the data
-                    const newBlock = new Block(this.block_id, blockType, blockTab, this);
+                //check need new in dragging block
 
-                    this.blocks[this.block_id] = newBlock;
-
-                    // Add this block to list of snapped blocks
-                    this.snapped_connections[this.block_id] = {"left": null, "right": null};
-                    this.snapToExistingBlock(newBlock, dropX, dropY);
-
-                    this.workspace.append(newBlock.element);
-                    this.block_id += 1;
-                }
+                this.checkChunkDrop(dropX, dropY);
 
                 // Reset dragging_block to null and offset to zero
                 this.dragging_block = null;
                 this.dragging_block_offset = { x: 0, y: 0 };
+
+                this.chunk.setCurrentlyDragging(false);
             }
         });
 
         // Handle dragstart event listeners on blocks
-        $('.block').on('dragstart', (event) => {
-            const blockTab = $(event.target).data('tab');
-            const blockType = $(event.target).data('block_type');
+        $('.block').on('mousedown', (event) => {
+            let target = $(event.target);
+            if (!target.hasClass('block')){
+                target = target.parent();
+            }
+
+            const offset = $(target).offset();
+            _this.dragging_block_offset.x = event.clientX - offset.left;
+            _this.dragging_block_offset.y = event.clientY - offset.top;
+
+            const blockTab = $(target).data('tab');
+            const blockType = $(target).data('block_type');
+
+            let block = this.createBlock(blockType, blockTab, event.pageX, event.pageY);
 
             // Set the dragging_block to the current block
-            this.dragging_block = { id: -1, block_type: blockType, tab: blockTab, inside: false };
+            this.dragging_block = { id: block.id, new: true};
+        
+            this.populateChunk(block);
+            this.chunk.setCurrentlyDragging(true);
+        });
+
+        $(document).on('mousemove', function(e) {
+            if (_this.dragging_block){
+                _this.chunk.head.updatePosition(e.pageX - _this.dragging_block_offset.x, e.pageY - _this.dragging_block_offset.y);
+                _this.chunk.move(_this.block_size + _this.block_hor_offset);
+            }
         });
     }
 
-    deleteBlock(blockId) {
-        const block = this.blocks[blockId];
-        if (block) {
-            block.element.remove();
-            delete this.blocks[blockId];
-            this.leftSnapCheck(this.snapped_connections[blockId], null, null);
-            this.resetSnaps(blockId);
+    // remove chunk from the dom
+    deleteChunk(){
+        this.chunk.deleteBlocks(this);
+    }
+
+    // this is triggered whenever a block from inside gets picked up
+    handleInsideBlockMove(block) {
+        this.populateChunk(block); // set the chunk
+        this.chunk.setCurrentlyDragging(true);
+        // now, remove the chunk from the snaps
+        this.removeAndStitch();
+    }
+
+    // removes the current chunk from the snaps and then stitches snaps back together
+    removeAndStitch(){
+        let left = this.snapped_connections[this.chunk.headId()]['left'];
+        let right = this.snapped_connections[this.chunk.tailId()]['right'];
+        this.removeSnaps();
+        this.stitchSnaps(left, right);
+    }
+
+    // removes the current chunk from the snaps
+    removeSnaps(chunk=null){
+        let c = null; // c is the chunk to do the removing of
+        if (chunk == null){
+            c = this.chunk;
+        } else{
+            c = chunk;
+        }
+        let left = this.snapped_connections[c.headId()]['left'];
+        let right = this.snapped_connections[c.tailId()]['right'];
+        if (left != null){
+            this.snapped_connections[left]['right'] = null;
+            this.snapped_connections[c.headId()]['left'] = null;
+        }
+        if (right != null){
+            this.snapped_connections[right]['left'] = null;
+            this.snapped_connections[c.tailId()]['right'] = null;
         }
     }
 
-    // TODO, fix broken logic of a block being swapped out and then running
+    // stitches two blocks together
+    stitchSnaps(left, right) {
+        if (left == null || right == null){
+            return;
+        }
+        this.snapped_connections[left]['right'] = right;
+        this.snapped_connections[right]['left'] = left;
+    }
+
+    // sets te chunk based on a block
+    populateChunk(block, chunk=null, size=null){
+        let cons = this.snapped_connections[block.id];
+        let chunk_blocks = [block];
+        let block_id = cons["right"];
+        let block_counter = 0; // limits amount of blocks in chunk (for overlap)
+        while (block_id != null){
+            if (size != null && block_counter == size){
+                break;
+            }
+            let b = this.blocks[block_id];
+            chunk_blocks.push(b);
+            block_id = this.snapped_connections[block_id]["right"];
+            block_counter += 1;
+        }
+
+        if (chunk == null){
+            this.chunk = new Chunk();
+            this.chunk.setBlocks(chunk_blocks);
+        } else{
+            chunk.setBlocks(chunk_blocks);
+        }
+    }
+
     calculateOverlap(drop, element) {        
         // Extracting left and top values from the points
         var left1 = drop[0], top1 = drop[1];
@@ -190,45 +263,78 @@ class VisualController {
         return (dx * dy) / (this.block_size * this.block_size);
     }
 
-    // sets the snaps of the left block to the snaps of the right block
-    setSnaps(block1, block2){
-        let block_snaps = this.snapped_connections[block2.id];
-        let left_snap = block_snaps["left"];
-        let right_snap = block_snaps["right"];
+    // this is triggered when the head overlaps enough with 'block' to perform a swap
+    swapFromOverlap(block){
+        let cur_chunk_len = this.chunk.blocks.length;
+        // the current chunk is the one being moved
+        // create a new chunk to keep track of what needs to be moved up
+        let overlap_chunk = new Chunk();
+        this.populateChunk(block, overlap_chunk, cur_chunk_len);
 
-        let old_cons = JSON.parse(JSON.stringify(this.snapped_connections[block1.id]));
+        // now have to move the snaps from overlap_chunk to this.chunk
+        // left and right are what were there
+        let left = this.snapped_connections[overlap_chunk.headId()]['left'];
+        let right = this.snapped_connections[overlap_chunk.tailId()]['right'];
+        this.removeSnaps(overlap_chunk); // sever snaps of overlap_chunk
 
-        // set the left side
-        if (left_snap != null && left_snap != block1.id){
-            this.snapped_connections[left_snap]["right"] = block1.id;
-            this.snapped_connections[block1.id]["left"] = left_snap;
-        }
-        if (right_snap != null && right_snap != block1.id){
-            this.snapped_connections[right_snap]["left"] = block1.id;
-            this.snapped_connections[block1.id]["right"] = right_snap;
-        }
+        // and now stitch the snaps to the new block
+        this.stitchSnaps(left, this.chunk.headId());
+        this.stitchSnaps(this.chunk.tailId(), right);    
 
-        // then do a custom left snap check
-        // this one has to do a left move depending on where it originated from
-        this.leftSnapCheckOverlap(old_cons, block2, block1);
+        // and center the now normal chunk
+        let start_x = block.x;
+        this.chunk.placeBlocks(start_x, block.y, this.block_size + this.block_hor_offset);
+
+        // now move the old chunk upwards
+        overlap_chunk.moveUp(this.block_size + 10);
     }
 
-    swapFromOverlap(blockToMove, block){
-        // this means the blockToMove was a significant portion of the block overlapping
-        // move the blockToMove where the block is, update the snaps, and move the block out and reset its snaps
-
-        // do the movement first
-        blockToMove.updatePosition(block.x, block.y); // move block to where it goes
-        block.updatePosition(block.x, block.y - this.block_size - 10); // move up
-
-        // now do the snap logic (replacing basically)
-        this.setSnaps(blockToMove, block);
-        this.resetSnaps(block.id);
+    // this is triggered when the head is dropped somewhere that doesnt result in a snap
+    handleNoSnap(dropX, dropY){
+        this.chunk.placeBlocks(dropX, dropY, this.block_size + this.block_hor_offset);
     }
 
-    // Snap the block to an existing block's left or right
-    // TODO determine if its worth it to show when two blocks can snap continuously
-    snapToExistingBlock(blockToMove, dropX, dropY) {
+    handleSnap(left_overlap, right_overlap) {
+        this.handleInsertSnaps(left_overlap, right_overlap);
+        this.handleInsertPosition(left_overlap, right_overlap)
+    }
+
+    handleInsertPosition(left_overlap, right_overlap){
+        if (left_overlap != null && right_overlap != null){
+            // this means its an insert in between two existing blocks
+            let start_x = left_overlap.x + this.block_size + this.block_hor_offset;
+            this.chunk.placeBlocks(start_x, left_overlap.y, this.block_size + this.block_hor_offset);
+            let right_block_id = this.snapped_connections[this.chunk.tailId()]["right"];
+            this.shiftBlocks(right_block_id, "right", this.chunk.blocks.length); // probs broken
+        } else if (left_overlap == null && right_overlap != null){
+            // its on the end at the left (so the start)
+            let start_x = right_overlap.x - this.block_size - this.block_hor_offset;
+            this.chunk.placeBlocks(start_x, right_overlap.y, this.block_size + this.block_hor_offset, 1);
+            let right_block_id = this.snapped_connections[this.chunk.tailId()]["right"];
+            this.shiftBlocks(right_block_id, "right", this.chunk.blocks.length); // probs broken
+        } else if (left_overlap != null && right_overlap == null){
+            // its on the end at the right
+            let start_x = left_overlap.x + this.block_size + this.block_hor_offset;
+            this.chunk.placeBlocks(start_x, left_overlap.y, this.block_size + this.block_hor_offset);
+        }
+    }
+
+    // when handleSnap is triggered, it calls this to fix snaps
+    handleInsertSnaps(left_overlap, right_overlap){
+        if (left_overlap != null && right_overlap != null){
+            this.stitchSnaps(left_overlap.id, this.chunk.headId());
+            this.stitchSnaps(this.chunk.tailId(), right_overlap.id);
+        } else if (left_overlap == null && right_overlap != null){
+            // its on the end at the left (so the start)
+            this.stitchSnaps(this.chunk.tailId(), right_overlap.id);
+        } else if (left_overlap != null && right_overlap == null){
+            // its on the end at the right
+            this.stitchSnaps(left_overlap.id, this.chunk.headId());
+        }
+    }
+
+    checkChunkDrop(dropX, dropY) {
+        // this snap will do everything based on chunk
         let did_snap = false;
         let left_overlap = null;
         let right_overlap = null;
@@ -238,7 +344,7 @@ class VisualController {
 
         for (var id in this.blocks){
             let block = this.blocks[id];
-            if (block.id !== blockToMove.id) {
+            if (!this.chunk.inChunk(block.id)) {
                 let leftX = block.x;
                 let rightX = block.x + this.block_size;
                 let height = block.y;
@@ -247,7 +353,7 @@ class VisualController {
 
                 if (overlap > this.overlap_threshold){
                     // indicates a block should be swapped
-                    this.swapFromOverlap(blockToMove, block);
+                    this.swapFromOverlap(block);
                     return;
                 }
 
@@ -279,7 +385,7 @@ class VisualController {
             let best_block = null;
             for (var id in this.blocks){
                 let block = this.blocks[id];
-                if (block.id !== blockToMove.id) {
+                if (!this.chunk.inChunk(block.id)) {
                     let dxLeft = block.x - dropX;
                     let dxTop = block.y - dropY;
                     if (Math.abs(dxTop) < this.top_threshold){
@@ -308,130 +414,20 @@ class VisualController {
 
         // If not snapped to either side, update the position to the drop location
         if (!did_snap) {
-            blockToMove.updatePosition(dropX, dropY);
-            this.leftSnapCheck(this.snapped_connections[blockToMove.id], null, null);
-            this.resetSnaps(blockToMove.id);
+            this.handleNoSnap(dropX, dropY);
         } else{
-            // one or more of the infos is set
-            if (left_overlap != null){
-                blockToMove.updatePosition(left_overlap.x + this.block_size + 1, left_overlap.y);
-            }
-            if (right_overlap != null){
-                blockToMove.updatePosition(right_overlap.x - this.block_size - 1, right_overlap.y);
-            }
-            this.updateSnaps(left_overlap, right_overlap, blockToMove);
+            this.handleSnap(left_overlap, right_overlap);
         }
-    }
-
-    // left info is the information for what block it is on the left of
-    // right info is same for right
-    updateSnaps(left_overlap, right_overlap, blockToMove){
-        let left_block_id = left_overlap != null ? left_overlap.id : null;
-        let right_block_id = right_overlap != null ? right_overlap.id : null;
-        let old_cons = this.snapped_connections[blockToMove.id];
-
-        this.resetSnaps(blockToMove.id);
-
-        const updateConnection = (overlap_id, blockToMove_id, side) => {
-            this.snapped_connections[overlap_id][side] = blockToMove_id;
-            this.snapped_connections[blockToMove_id][side === "left" ? "right" : "left"] = overlap_id;
-        };
-
-        if (left_overlap != null && right_overlap != null){
-            updateConnection(left_overlap.id, blockToMove.id, 'right');
-            updateConnection(right_overlap.id, blockToMove.id, 'left');
-            this.shiftBlocks(blockToMove.id, "right");
-        } else if (left_overlap == null && right_overlap != null){
-            // its on the end at the left (so the start)
-            updateConnection(right_overlap.id, blockToMove.id, 'left');
-        } else if (left_overlap != null && right_overlap == null){
-            // its on the end at the right
-            updateConnection(left_overlap.id, blockToMove.id, 'right');
-        }
-
-        this.leftSnapCheck(old_cons, right_block_id, left_block_id);
-    }
-
-    // this also has to refresh the chain
-    // rb and lb are where its going now to avoid collapsing when it shouldnt
-    leftSnapCheck(old_cons, rb, lb){
-        // check that this block is the left of any other blocks that its now not
-        // if so, shift it over to the left
-
-        console.log(old_cons);
-        console.log(rb, lb);
-
-        let l = old_cons["left"];
-        let r = old_cons["right"];
-
-        // this makes sure that if it was at the start of the block chain, the chain doesnt move left
-        if (l == null){
-            return;
-        }
-
-        // this makes sure that if doesnt move left if its put back in the same place
-        if (l == lb){
-            return;
-        }
-
-        // this makes sure that its not put back in the same place
-        if (r != null && r == rb){
-            return;
-        }
-
-        if (r != null){
-            if (l != null){
-                this.snapped_connections[l]["right"] = r;
-                this.snapped_connections[r]["left"] = l;
-            }
-            this.shiftBlocks(r, "left");
-        }
-    }
-
-    // does a check to see where a left move has to start from
-    // an overlapping event
-    // displaced block is the one moved up
-    // db_trigger is the block below that
-    leftSnapCheckOverlap(old_cons, displaced_block, db_trigger){
-        let left_con = old_cons['left'];
-        let right_con = old_cons['right'];
-
-        if (left_con == null || right_con == null){
-            return;
-        }
-
-        this.shiftBlocks(right_con, "left", db_trigger, displaced_block);
     }
 
     // shift blocks across whenever one is inserted between two blocks
     // block is is the id to start the shifting from
-    shiftBlocks(block_id, dir, trigger=null, displaced_block=null){
-        let i = 0;
-        while (block_id != null && i < 10){
-            if (block_id === trigger.id){
-                displaced_block.shiftBlock(this.block_size + 1, dir);
-            }
+    shiftBlocks(block_id, dir, amount){
+        while (block_id != null){
             let block = this.blocks[block_id];
-            block.shiftBlock(this.block_size + 1, dir);
+            block.shiftBlock(amount * (this.block_size + this.block_hor_offset), dir);
             // then find the next block to shift over
             block_id = this.snapped_connections[block_id]["right"];
-            i += 1;
-        }
-    }
-
-    // takes a block_id and removes it from all snaps and its own snap
-    resetSnaps(block_id){
-        this.snapped_connections[block_id] = {"left": null, "right": null};
-        for (var key in this.snapped_connections){
-            let obj = this.snapped_connections[key];
-            let left = obj["left"];
-            let right = obj["right"];
-            if (left == block_id){
-                this.snapped_connections[key]["left"] = null;
-            }
-            if (right == block_id){
-                this.snapped_connections[key]["right"] = null;
-            }
         }
     }
 
@@ -475,9 +471,7 @@ class VisualController {
 
         $('#stop').on('click', function () {
             // Call the logic controller's stop function
-            var smiley = $('.smiley');
-            _this.smiley();
-            smiley.css({'display': 'flex'});
+            _this.logic_controller.stopExecution();
         });
 
         $('#load').on('click', function () {
@@ -555,102 +549,5 @@ class VisualController {
         }
 
         return completedPromise;
-    }  
-
-    smiley(){
-        var _this = this;
-        var smiley = document.getElementById('smiley');
-        var smile_x = 500;
-        var smile_y = 100;
-        var smile_size = 50;
-        var velocityX = 2;
-        var velocityY = 0;
-        var gravity = 0.02;
-        var rotation = 0;
-        var spin = 5;
-        var mouse = { x: 0, y: 0 };
-    
-        function moveSmiley() {
-            applyMouseForce();
-            var newX = smile_x + velocityX;
-            var newY = smile_y + velocityY;
-    
-            // Gravity effect
-            velocityY += gravity;
-    
-            // Check for floor collision
-            if (newY + smile_size > window.innerHeight) {
-                newY = window.innerHeight - smile_size;
-                velocityY = -velocityY * 0.99; // Lose some energy on bounce
-                changeSpin();
-            }
-
-            if (newY < 0){
-                newY = 0;
-                velocityY = -velocityY * 0.9; // Lose some energy on bounce
-                changeSpin();
-            }
-    
-            // Check for wall collision
-            if (newX < 0 || newX + smile_size > window.innerWidth) {
-                if (newX < 0){
-                    newX = 0;
-                } else {
-                    newX = window.innerWidth - smile_size;
-                }
-                velocityX = -velocityX * 0.9;
-                changeSpin();
-            }
-    
-            // Apply rotation
-            rotation += spin;
-            smiley.style.transform = `rotate(${rotation}deg)`;
-    
-            // Move the smiley
-            smiley.style.left = smile_x + 'px';
-            smiley.style.top = smile_y + 'px';
-
-            smile_x = newX;
-            smile_y = newY;
-        }
-    
-        function changeSpin() {
-            spin = -spin;
-        }
-
-        function applyMouseForce() {
-            var dx = smile_x - mouse.x;
-            var dy = smile_y - mouse.y;
-            var distance = Math.sqrt(dx * dx + dy * dy);
-    
-            if (distance < 200) { // Repel if within 150px radius
-                var force = (200 - distance) / 300;
-                velocityX -= force * (dx / distance);
-                velocityY -= force * (dy / distance);
-
-                // Change color based on distance
-                var colorIntensity = Math.max(0, (200 - distance) / 200);
-                var red = 255 * colorIntensity;
-                var green = 255 * (1 - colorIntensity);
-                var blue = 0;
-                smiley.style.backgroundColor = `rgb(${red},${green},${blue})`;
-            } else {
-                // Reset to original color when the mouse is far away
-                smiley.style.backgroundColor = 'yellow';
-            }
-        }
-    
-        document.addEventListener('mousemove', function(event) {
-            mouse.x = event.clientX;
-            mouse.y = event.clientY;
-        });
-
-        $(document).on('click', '.smiley', function(event) {
-            clearInterval(_this.smiley_interval);
-            _this.smiley_interval = null;
-        });
-    
-        // Start animation
-        this.smiley_interval = setInterval(moveSmiley, 1);
     }
 }

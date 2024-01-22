@@ -1,14 +1,22 @@
+:root{
+    --block_size: 100px;
+    --light_pink: #e0c3c5;
+    --dark_pink: #cb7086;
+    --play_speed: 1s;
+    --tile_cols: 4;
+}
+
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #e0c3c5;
+    background-color: var(--light_pink);
     display: flex;
     width: 100%;
 }
 
 .header {
-    background-color: #e0c3c5;
+    background-color: var(--light_pink);
     margin: 20px;
     display: flex;
     flex-direction: column;
@@ -23,7 +31,7 @@ body {
 .tab-selection {
     display: flex;
     justify-content: left;
-    background-color: #cb7086;
+    background-color: var(--dark_pink);
 }
 
 .action_buttons {
@@ -57,7 +65,7 @@ body {
     border-radius: 50%;
     width: 50px;
     height: 50px;
-    background-color: #cb7086;
+    background-color: var(--dark_pink);
     color: #fff;
     padding: 10px;
     cursor: pointer;
@@ -76,17 +84,32 @@ body {
     background-color: white;
     gap: 20px;
     padding: 10px 20px;
-    min-height: 100px;
+    min-height: var(--block_size);
 }
 
 .block {
-    width: 100px;
-    height: 100px;
-    background-color: #cb7086;
+    box-sizing: border-box;
+    position: relative;
+    user-select: none;
+    width: var(--block_size);
+    height: var(--block_size);
+    background-color: var(--dark_pink);
     color: #fff;
     cursor: pointer;
-    transition: left 0.2s, top 0.2s, transform 1s;
     border: 3px solid black;
+}
+
+.block .block_image {
+    width: 100%;
+    height: 100%;
+}
+
+.with-transition {
+    transition: left 0.2s, top 0.2s, transform var(--play_speed);
+}
+
+.currently_dragging {
+    z-index: 10;
 }
 
 .flash_transition {
@@ -129,7 +152,7 @@ body {
     transform: translateY( -50%);
     width: 40px;
     height: 40px;
-    background-color: #cb7086;
+    background-color: var(--dark_pink);
     border-radius: 50%;
     border: none;
     outline: none;
@@ -154,7 +177,7 @@ body {
     transform: rotate(270deg);
 }
 
-.tile_img, .block_image {
+.tile_img {
     width: 100%;
     height: 100%;
 }
@@ -169,7 +192,7 @@ body {
     justify-content: center;
     align-items: center;
     overflow: scroll;
-    color: #cb7086;
+    color: var(--dark_pink);
     font-size: 20px;
 }
 
@@ -178,9 +201,9 @@ body {
     margin: 10px auto;  
     background-color: white;
     transition: all 0.1s;
-    border: 5px solid #cb7086;
+    border: 5px solid var(--dark_pink);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(var(--tile_cols), 1fr);
 }
 
 /* Style the individual grid cells */

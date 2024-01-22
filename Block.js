@@ -14,7 +14,6 @@ class Block {
         // minor change
         const blockElement = $('<div>')
             .addClass('block')
-            .attr('draggable', 'true')
             .attr('data-tab', this.tab)
             .attr('data-placed', 'true')
             .css({
@@ -27,21 +26,17 @@ class Block {
             .attr('src', this.block_type.img_path)
             .attr('alt', "Nuh uh")
             .attr('draggable', false)
-            .addClass('block_image')            
-            .on('dragstart', (event) => {
-                event.preventDefault(); // Prevent default drag behavior of the image
-            });
+            .addClass('block_image')
 
         blockElement.append(imageElement);
-
-        // Add drag start event listener
-        blockElement.on('dragstart', () => {
-            this.visualController.dragging_block = { id: this.id, tab: this.tab, inside: true };
-        });
 
         blockElement.on('mousedown', (event) => {
             this.visualController.dragging_block_offset.x = event.clientX - this.x;
             this.visualController.dragging_block_offset.y = event.clientY - this.y;
+
+            this.visualController.dragging_block = { id: this.id, new: false };
+            // here, have to construct chunk and remove from snaps etc
+            this.visualController.handleInsideBlockMove(this);
         });
 
         return blockElement;
@@ -54,7 +49,7 @@ class Block {
         this.y = top;
         this.element.css({
             left: this.x - offset.left + 'px',
-            top: this.y - offset.top + 'px',
+            top: this.y - this.visualController.wsov + 'px', // offset by the original offset, not what it is now
         });
     }
 
@@ -75,5 +70,21 @@ class Block {
         setTimeout(function() {
           $(this.element).toggleClass("flash_transition");
         }, 1000);
+    }
+
+    setCurrentlyDragging(dragging){
+        if (dragging){
+            this.element.addClass('currently_dragging');
+        } else{
+            this.element.removeClass('currently_dragging');
+        }
+    }
+
+    setCanTransition(transition){
+        if (transition){
+            this.element.addClass('with-transition');
+        } else{
+            this.element.removeClass('with-transition');
+        }
     }
 }

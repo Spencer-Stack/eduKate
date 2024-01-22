@@ -2,23 +2,29 @@ class Loop {
     constructor() {
         this.block_set = new BlockSet();
         this.loop_count = 3; // Change the number of loop iterations as needed
+        this.executing = true;
     }
 
     execute(virtual_controller, callback) {
         let loopIndex = 0;
 
         const executeLoop = () => {
-            if (loopIndex < this.loop_count) {
+            if (loopIndex < this.loop_count && this.executing) {
                 this.block_set.execute(virtual_controller, () => {
                     loopIndex++;
                     executeLoop(); // Start the next loop iteration
                 });
-            } else{
+            } else if (this.executing){
                 callback();
             }
         };
 
         executeLoop(); // Start the first loop iteration
+    }
+
+    stopExecution() {
+        this.executing = false;
+        this.block_set.stopExecution();
     }
 
     addBlock(block) {

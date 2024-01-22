@@ -5,24 +5,32 @@ class BlockSet {
         this.start = null;
         this.end = null;
         this.block_exec_delay = 1000;
+        this.executing = true;
     }
 
     execute(virtual_controller, callback) {
         let index = 0;
 
         const executeBlockWithDelay = () => {
-            if (index < this.blocks.length) {
+            if (index < this.blocks.length && this.executing) { // Check if still executing
                 const currentBlock = this.blocks[index];
                 currentBlock.execute(virtual_controller, () => {
                     index++;
                     executeBlockWithDelay();
                 });
-            } else {
-                callback(); // Call the callback when all blocks are executed
+            } else if(this.executing) {
+                callback();
             }
         };
 
         executeBlockWithDelay();
+    }
+
+    stopExecution() {
+        this.executing = false;
+        for (var block of this.blocks){
+            block.stopExecution();
+        }
     }
 
     addBlock(block) {
