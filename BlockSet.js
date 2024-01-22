@@ -8,13 +8,13 @@ class BlockSet {
         this.executing = true;
     }
 
-    execute(virtual_controller, callback) {
+    execute(controllers, callback) {
         let index = 0;
 
         const executeBlockWithDelay = () => {
             if (index < this.blocks.length && this.executing) { // Check if still executing
                 const currentBlock = this.blocks[index];
-                currentBlock.execute(virtual_controller, () => {
+                currentBlock.execute(controllers, () => {
                     index++;
                     executeBlockWithDelay();
                 });

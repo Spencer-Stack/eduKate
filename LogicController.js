@@ -14,8 +14,8 @@ class LogicController {
         this.block_set.addBlock(block);
     }
 
-    execute(virtual_controller){
-        this.block_set.execute(virtual_controller, () => {});
+    execute(controllers){
+        this.block_set.execute(controllers, () => {});
     }
 
     stopExecution(){

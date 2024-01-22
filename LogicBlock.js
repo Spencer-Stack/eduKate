@@ -21,18 +21,20 @@ class LogicBlock {
         return logic_block;
     }
 
-    execute(virtual_controller, callback){
+    execute(controllers, callback){
         if (!this.executing){
             return;
         }
         if (this.block_type.name == "move_right"){
-            virtual_controller.moveBaby("right");
+            controllers.virtual_controller.moveBaby("right");
         } else if (this.block_type.name == "move_up"){
-            virtual_controller.moveBaby('up');
+            controllers.virtual_controller.moveBaby('up');
         } else if (this.block_type.name == "move_down"){
-            virtual_controller.moveBaby('down');
+            controllers.virtual_controller.moveBaby('down');
         } else if (this.block_type.name == "move_left"){
-            virtual_controller.moveBaby('left');
+            controllers.virtual_controller.moveBaby('left');
+        } else if (this.block_type.name == "stop"){
+            controllers.logic_controller.stopExecution();
         }
         this.visualBlock.flash();
 

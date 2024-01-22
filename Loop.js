@@ -5,12 +5,12 @@ class Loop {
         this.executing = true;
     }
 
-    execute(virtual_controller, callback) {
+    execute(controllers, callback) {
         let loopIndex = 0;
 
         const executeLoop = () => {
             if (loopIndex < this.loop_count && this.executing) {
-                this.block_set.execute(virtual_controller, () => {
+                this.block_set.execute(controllers, () => {
                     loopIndex++;
                     executeLoop(); // Start the next loop iteration
                 });

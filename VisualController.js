@@ -466,7 +466,12 @@ class VisualController {
             _this.logic_controller.reset();
             _this.virtual_controller.reset();
             _this.logic_controller.parseVisual(_this.blocks, _this.snapped_connections);
-            _this.logic_controller.execute(_this.virtual_controller);
+            let controllers = {
+                'visual_controller': _this,
+                'virtual_controller': _this.virtual_controller,
+                'logic_controller': _this.logic_controller
+            };
+            _this.logic_controller.execute(controllers);
         });
 
         $('#stop').on('click', function () {
