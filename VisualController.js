@@ -217,7 +217,7 @@ class VisualController {
         let cons = this.snapped_connections[block.id];
         let chunk_blocks = [block];
         let block_id = cons["right"];
-        let block_counter = 0; // limits amount of blocks in chunk (for overlap)
+        let block_counter = 1; // limits amount of blocks in chunk (for overlap)
         while (block_id != null){
             if (size != null && block_counter == size){
                 break;
