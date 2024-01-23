@@ -152,6 +152,7 @@ class VisualController {
         
             this.populateChunk(block);
             this.chunk.setCurrentlyDragging(true);
+            this.setLastMoved();
         });
 
         $(document).on('mousemove', function(e) {
@@ -171,6 +172,7 @@ class VisualController {
     handleInsideBlockMove(block) {
         this.populateChunk(block); // set the chunk
         this.chunk.setCurrentlyDragging(true);
+        this.setLastMoved();
         // now, remove the chunk from the snaps
         this.removeAndStitch();
     }
@@ -296,7 +298,7 @@ class VisualController {
 
     handleSnap(left_overlap, right_overlap) {
         this.handleInsertSnaps(left_overlap, right_overlap);
-        this.handleInsertPosition(left_overlap, right_overlap)
+        this.handleInsertPosition(left_overlap, right_overlap);
     }
 
     handleInsertPosition(left_overlap, right_overlap){
@@ -566,5 +568,13 @@ class VisualController {
         } else{
             console.css({'color': '#07b013'})
         }
+    }
+
+    setLastMoved(){
+        for (var id in this.blocks){
+            let block = this.blocks[id];            
+            block.setLastMoved(false);
+        }
+        this.chunk.setLastMoved();
     }
 }

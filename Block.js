@@ -8,6 +8,17 @@ class Block {
         this.x = x;                // Initial x coordinate
         this.y = y;                // Initial y coordinate
         this.element = this.createBlockElement();
+        this.was_last_moved = false;
+    }
+
+    setLastMoved(moved){
+        this.was_last_moved = moved;
+        // show moved on top
+        if (moved){
+            this.element.css({'z-index': 1});
+        } else{
+            this.element.css({'z-index': 0});
+        }
     }
 
     createBlockElement() {

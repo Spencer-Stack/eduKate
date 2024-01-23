@@ -11,6 +11,12 @@ class Chunk {
         this.tail = this.blocks[this.blocks.length - 1];
     }
 
+    setLastMoved(){
+        for (var block of this.blocks){
+            block.setLastMoved(true);
+        }
+    }
+
     headId(){
         return this.head.id;
     }
