@@ -47,7 +47,8 @@ class VisualController {
             _this.introSequence();
         }, 50);
 
-        this.intro_active = true;
+        this.intro_sequence_index = 0;
+        this.continueSequence = true;
     }
 
     async load_text_file() {
@@ -74,29 +75,52 @@ class VisualController {
         }
     }
 
+    runEvent() {
+        if (this.intro_sequence_index < this.intro_events.length) {
+            this.intro_events[this.intro_sequence_index]();
+            this.intro_sequence_index += 1;
+        }
+    }
+
     introSequence(){
-        this.moveSelTarget('block-display')
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('tab-selection'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('workspace'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('run'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('stop'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('save'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('load'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('console'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('virtual_toggle'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget('grid_house'))
-            .then(() => this.custDelayReset())
-            .then(() => this.moveSelTarget(null))
-            .then(() => this.custDelayReset())
+        let _this = this;
+        this.intro_events = [
+            function() { _this.moveSelTarget('block-display'); },
+            function() { _this.moveSelTarget('tab-selection'); },
+            function() { _this.moveSelTarget('workspace'); },
+            function() { _this.moveSelTarget('run'); },
+            function() { _this.moveSelTarget('stop'); },
+            function() { _this.moveSelTarget('save'); },
+            function() { _this.moveSelTarget('load'); },
+            function() { _this.moveSelTarget('console'); },
+            function() { _this.moveSelTarget('virtual_toggle'); },
+            function() { _this.moveSelTarget('grid_house'); },
+            function() { _this.moveSelTarget(null); },
+        ];
+
+        this.runEvent();
+        this.checkForNextEvent();
+    }
+
+    checkForNextEvent() {
+        let _this = this;
+        if (this.intro_sequence_index < this.intro_events.length) {
+            $(document).on("click keydown", function(e) {
+                if (e.type === "click" || (e.type === "keydown" && e.key === "Escape")) {
+                    $('.tile_img').css({'z-index': 0});
+                    $("#" + _this.sel_target).css({'z-index': 0});
+                    if (e.key === "Escape") {
+                        // Break out of the entire sequence
+                        this.continueSequence = false;
+                        _this.moveSelTarget(null);
+                        $(document).off("click keydown");
+                    } else {
+                        // Run next event
+                        _this.runEvent();
+                    }
+                }
+            });
+        }
     }
 
     displayText(target){
@@ -106,35 +130,10 @@ class VisualController {
             this.showTextBubble(pos[0], pos[1], pos[2], text);
             this.text_index += 1;
         } else{
-            this.intro_active = false;
+            this.continueSequence = false;
             this.hideTextBubble();
         }
     }
-
-    custDelayReset() {
-        // reset tile images
-        $('.tile_img').css({'z-index': 0});
-    
-        return new Promise(resolve => {
-            // Create a click event handler
-            const clickHandler = (event) => {
-                console.log('clicked in visual');
-                event.preventDefault();  // Prevents default action of the event (e.g., button clicks)
-                event.stopPropagation(); // Stops the event from bubbling up the DOM
-    
-                // Perform the intended action
-                $("#" + this.sel_target).css({'z-index': 0});
-                resolve();
-    
-                // Remove the event listener after the click event
-                $(document).off('click', clickHandler);
-            };
-    
-            // Attach the click event listener to the document
-            $(document).on('click', clickHandler);
-        });
-    }
-    
 
     // creates a Block based on an element
     createBlock(blockType, blockTab, x, y){
@@ -198,7 +197,7 @@ class VisualController {
 
         // Handle dragstart event listeners on blocks
         $('.block').on('mousedown', (event) => {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             let target = $(event.target);
@@ -224,7 +223,7 @@ class VisualController {
         });
 
         $(document).on('mousemove', function(e) {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             if (_this.dragging_block){
@@ -511,7 +510,7 @@ class VisualController {
 
         // Handle tab button click using event delegation
         $('.header').on('click', '.tab-button', (event) => {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             const tabText = $(event.target).text();
@@ -533,7 +532,7 @@ class VisualController {
         // These buttons will be connected to the logic controller in the future
 
         $('.virtual_toggle').on('click', function () {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             $('#virtual').toggleClass('expanded');
@@ -541,7 +540,7 @@ class VisualController {
         });
 
         $('#run').on('click', function () {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             // Call the logic controller's run or setup function
@@ -558,7 +557,7 @@ class VisualController {
         });
 
         $('#stop').on('click', function () {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             // Call the logic controller's stop function
@@ -567,7 +566,7 @@ class VisualController {
         });
 
         $('#load').on('click', function () {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             // Call the logic controller's load function
@@ -575,7 +574,7 @@ class VisualController {
         });
 
         $('#save').on('click', function () {
-            if (_this.intro_active){
+            if (_this.continueSequence){
                 return;
             }
             // Call the logic controller's save function
