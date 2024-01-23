@@ -138,6 +138,7 @@ class VirtualController {
         let _this = this;
         this.createConfetti();
         this.visual_controller.logic_controller.stopExecution();
+        this.visual_controller.setConsole("The baby has completed the level");
         setTimeout(function(){
             _this.nextLevel();
         }, 5000);

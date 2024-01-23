@@ -476,6 +476,7 @@ class VisualController {
         $('#stop').on('click', function () {
             // Call the logic controller's stop function
             _this.logic_controller.stopExecution();
+            _this.setConsole("Program was stopped by you");
         });
 
         $('#load').on('click', function () {
@@ -553,5 +554,16 @@ class VisualController {
         }
 
         return completedPromise;
+    }
+
+    // good is true if the program execution wasn't an error, its false otherwise
+    setConsole(text, good=true){
+        let console = $('#console');
+        console.text(text);
+        if (!good){
+            console.css({'color': '#fc4903'})
+        } else{
+            console.css({'color': '#07b013'})
+        }
     }
 }

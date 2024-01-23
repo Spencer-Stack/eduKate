@@ -36,6 +36,7 @@ class LogicBlock {
             result = controllers.virtual_controller.moveBaby('left');
         } else if (this.block_type.name == "stop"){
             controllers.logic_controller.stopExecution();
+            controllers.visual_controller.setConsole("The program was stopped by a block");
         }
 
         this.visualBlock.flash();
@@ -43,6 +44,7 @@ class LogicBlock {
         // the result was bad (in this case, for the baby hitting a wall, but should be much more)
         if (!result){
             controllers.logic_controller.stopExecution();
+            controllers.visual_controller.setConsole("The baby has bumped into a wall", false);
             return;
         }
 
