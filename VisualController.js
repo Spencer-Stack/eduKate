@@ -28,48 +28,113 @@ class VisualController {
         // Each block that is created has an id: (left:, right:)
         this.snapped_connections = {};
 
+        // text
+        this.text_positions = [[30, 220, true], [30, 100, true], [30, 70, true], 
+                            [50, 100, false], [50, 100, false], [50, 100, false], 
+                            [50, 100, false], [30, 600, true], [50, 300, false], 
+                            [50, 500, false]];
+
+        this.texts = [];
+        this.text_index = 0;
+        this.load_text_file();
+
         // selectors
         this.hor_sel = $('#horizontal_selector');
         this.ver_sel = $('#vertical_selector');
         this.sel_target = null;
-        // this.introSequence();
+        let _this = this;
+        setTimeout(function(){
+            _this.introSequence();
+        }, 50);
+
+        this.intro_active = true;
+    }
+
+    async load_text_file() {
+        try {
+            const response = await fetch('introduction_text.txt');
+            const data = await response.text();
+            const lines = data.split('\n');
+
+            let text = "";
+
+            for (const line of lines) {
+                if (line == ""){
+                    this.texts.push(text);
+                    text = '';
+                } else{
+                    text += line;
+                }
+            }
+            if (text){
+                this.texts.push(text);
+            }
+        } catch (error) {
+            console.error('Error reading the file:', error);
+        }
     }
 
     introSequence(){
-        this.moveSelTarget('run')
-            .then(() => this.custDelayReset(2500))
-            .then(() => this.moveSelTarget('stop'))
-            .then(() => this.custDelayReset(2500))
-            .then(() => this.moveSelTarget('virtual_toggle'))
-            .then(() => this.custDelayReset(2500))
-            .then(() => this.moveSelTarget('grid_house'))
-            .then(() => this.custDelayReset(3000))
+        this.moveSelTarget('block-display')
+            .then(() => this.custDelayReset())
             .then(() => this.moveSelTarget('tab-selection'))
-            .then(() => this.custDelayReset(2500))
-            .then(() => this.moveSelTarget('action-buttons'))
-            .then(() => this.custDelayReset(2500))
-            .then(() => this.moveSelTarget('block-display'))
-            .then(() => this.custDelayReset(2500))
+            .then(() => this.custDelayReset())
             .then(() => this.moveSelTarget('workspace'))
-            .then(() => this.custDelayReset(2500))
+            .then(() => this.custDelayReset())
+            .then(() => this.moveSelTarget('run'))
+            .then(() => this.custDelayReset())
+            .then(() => this.moveSelTarget('stop'))
+            .then(() => this.custDelayReset())
+            .then(() => this.moveSelTarget('save'))
+            .then(() => this.custDelayReset())
+            .then(() => this.moveSelTarget('load'))
+            .then(() => this.custDelayReset())
             .then(() => this.moveSelTarget('console'))
-            .then(() => this.custDelayReset(2500))
+            .then(() => this.custDelayReset())
+            .then(() => this.moveSelTarget('virtual_toggle'))
+            .then(() => this.custDelayReset())
+            .then(() => this.moveSelTarget('grid_house'))
+            .then(() => this.custDelayReset())
             .then(() => this.moveSelTarget(null))
-            .then(() => this.custDelayReset(2500));
+            .then(() => this.custDelayReset())
     }
 
-    custDelayReset(time) {
-        let targetId = this.sel_target;
+    displayText(target){
+        if (this.text_index < this.texts.length && target != null){
+            let text = this.texts[this.text_index];
+            let pos = this.text_positions[this.text_index];
+            this.showTextBubble(pos[0], pos[1], pos[2], text);
+            this.text_index += 1;
+        } else{
+            this.intro_active = false;
+            this.hideTextBubble();
+        }
+    }
+
+    custDelayReset() {
         // reset tile images
         $('.tile_img').css({'z-index': 0});
-        // this.showTextBubble();
+    
         return new Promise(resolve => {
-            setTimeout(() => {
-                $("#" + targetId).css({'z-index': 0});
+            // Create a click event handler
+            const clickHandler = (event) => {
+                console.log('clicked in visual');
+                event.preventDefault();  // Prevents default action of the event (e.g., button clicks)
+                event.stopPropagation(); // Stops the event from bubbling up the DOM
+    
+                // Perform the intended action
+                $("#" + this.sel_target).css({'z-index': 0});
                 resolve();
-            }, time);
+    
+                // Remove the event listener after the click event
+                $(document).off('click', clickHandler);
+            };
+    
+            // Attach the click event listener to the document
+            $(document).on('click', clickHandler);
         });
     }
+    
 
     // creates a Block based on an element
     createBlock(blockType, blockTab, x, y){
@@ -133,6 +198,9 @@ class VisualController {
 
         // Handle dragstart event listeners on blocks
         $('.block').on('mousedown', (event) => {
+            if (_this.intro_active){
+                return;
+            }
             let target = $(event.target);
             if (!target.hasClass('block')){
                 target = target.parent();
@@ -156,6 +224,9 @@ class VisualController {
         });
 
         $(document).on('mousemove', function(e) {
+            if (_this.intro_active){
+                return;
+            }
             if (_this.dragging_block){
                 _this.chunk.head.updatePosition(e.pageX - _this.dragging_block_offset.x, e.pageY - _this.dragging_block_offset.y);
                 _this.chunk.move(_this.block_size + _this.block_hor_offset);
@@ -436,9 +507,13 @@ class VisualController {
     initializeTabSelection() {
         // Initial tab selection
         this.showBlocks('Initialise');
+        let _this = this;
 
         // Handle tab button click using event delegation
         $('.header').on('click', '.tab-button', (event) => {
+            if (_this.intro_active){
+                return;
+            }
             const tabText = $(event.target).text();
             this.showBlocks(tabText);
         });
@@ -458,11 +533,17 @@ class VisualController {
         // These buttons will be connected to the logic controller in the future
 
         $('.virtual_toggle').on('click', function () {
+            if (_this.intro_active){
+                return;
+            }
             $('#virtual').toggleClass('expanded');
             $('#arrow').toggleClass('expanded');
         });
 
         $('#run').on('click', function () {
+            if (_this.intro_active){
+                return;
+            }
             // Call the logic controller's run or setup function
             _this.logic_controller.reset();
             _this.virtual_controller.reset();
@@ -477,28 +558,51 @@ class VisualController {
         });
 
         $('#stop').on('click', function () {
+            if (_this.intro_active){
+                return;
+            }
             // Call the logic controller's stop function
             _this.logic_controller.stopExecution();
             _this.setConsole("Program was stopped by you");
         });
 
         $('#load').on('click', function () {
+            if (_this.intro_active){
+                return;
+            }
             // Call the logic controller's load function
             _this.playAnimation();
         });
 
         $('#save').on('click', function () {
+            if (_this.intro_active){
+                return;
+            }
             // Call the logic controller's save function
         });
     }
 
-    showTextBubble(x, y, text) {
-        $("#textBubbleContent").text(text); // Set the text
-        $("#textBubble").css({ // Position the bubble
-            "left": x + "px",
+    showTextBubble(x, y, is_left, text) {
+        $("#textBubble").text(text); // Set the text
+    
+        const positionStyle = {
             "top": y + "px",
             "display": "block" // Make it visible
-        });
+        };
+    
+        if (is_left) {
+            positionStyle.left = x + "px";
+            positionStyle.right = ''; // Reset right
+        } else {
+            positionStyle.right = x + "px";
+            positionStyle.left = ''; // Reset left
+        }
+    
+        $("#textBubble").css(positionStyle);
+    }
+
+    hideTextBubble(){
+        $("#textBubble").css({'display': 'none'});
     }
 
     doSelMovement(target){
@@ -536,6 +640,8 @@ class VisualController {
         let _this = this;
         let completedPromise = Promise.resolve();
         this.sel_target = target;
+
+        this.displayText(target);
 
         if (target == null){
             this.hor_sel.css({'visibility': 'hidden'});
