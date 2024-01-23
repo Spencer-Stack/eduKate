@@ -25,18 +25,26 @@ class LogicBlock {
         if (!this.executing){
             return;
         }
+        let result = true;
         if (this.block_type.name == "move_right"){
-            controllers.virtual_controller.moveBaby("right");
+            result = controllers.virtual_controller.moveBaby("right");
         } else if (this.block_type.name == "move_up"){
-            controllers.virtual_controller.moveBaby('up');
+            result = controllers.virtual_controller.moveBaby('up');
         } else if (this.block_type.name == "move_down"){
-            controllers.virtual_controller.moveBaby('down');
+            result = controllers.virtual_controller.moveBaby('down');
         } else if (this.block_type.name == "move_left"){
-            controllers.virtual_controller.moveBaby('left');
+            result = controllers.virtual_controller.moveBaby('left');
         } else if (this.block_type.name == "stop"){
             controllers.logic_controller.stopExecution();
         }
+
         this.visualBlock.flash();
+        
+        // the result was bad (in this case, for the baby hitting a wall, but should be much more)
+        if (!result){
+            controllers.logic_controller.stopExecution();
+            return;
+        }
 
         // Call the callback after a one-second delay
         setTimeout(() => {

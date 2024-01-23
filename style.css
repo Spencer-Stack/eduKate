@@ -274,24 +274,17 @@ body {
 }
 
 
-.smiley {
-    left: 500px;
-    top: 500px;
-    z-index: 2;
-    width: 50px;
-    height: 50px;
-    background-color: yellow;
-    border-radius: 50%;
+.confetti {
     position: absolute;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    font-size: 30px;
-    user-select: none;
-    cursor: pointer;
+    width: 10px;
+    height: 10px;
+    background-color: #f00; /* Red, but use multiple colors */
+    animation: fall linear;
 }
 
-.smiley::before {
-    content: ':)';
-    position: absolute;
+@keyframes fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
 }

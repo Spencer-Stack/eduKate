@@ -1,6 +1,6 @@
 class VisualController {
     constructor() {
-        this.virtual_controller = new VirtualController();
+        this.virtual_controller = new VirtualController(this);
         this.logic_controller = null; // gets set by creation of logic controller
         this.workspace = $('#workspace'); // Select the workspace using jQuery
         this.block_id = 0;
