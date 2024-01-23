@@ -15,7 +15,11 @@ class LogicController {
     }
 
     execute(controllers){
-        this.block_set.execute(controllers, () => {});
+        this.block_set.execute(controllers, () => {
+            if (this.block_set.executing){
+                controllers.visual_controller.setConsole("Program run successfully");
+            }
+        });
     }
 
     stopExecution(){

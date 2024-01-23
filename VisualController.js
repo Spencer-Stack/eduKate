@@ -464,6 +464,7 @@ class VisualController {
             // Call the logic controller's run or setup function
             _this.logic_controller.reset();
             _this.virtual_controller.reset();
+            _this.setConsole("");
             _this.logic_controller.parseVisual(_this.blocks, _this.snapped_connections);
             let controllers = {
                 'visual_controller': _this,
