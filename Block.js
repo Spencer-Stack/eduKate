@@ -34,7 +34,7 @@ class Block {
             this.visualController.dragging_block_offset.x = event.clientX - this.x;
             this.visualController.dragging_block_offset.y = event.clientY - this.y;
 
-            this.visualController.dragging_block = { id: this.id, new: false };
+            this.visualController.dragging_block = { id: this.id };
             // here, have to construct chunk and remove from snaps etc
             this.visualController.handleInsideBlockMove(this);
         });

@@ -148,7 +148,7 @@ class VisualController {
             let block = this.createBlock(blockType, blockTab, event.pageX, event.pageY);
 
             // Set the dragging_block to the current block
-            this.dragging_block = { id: block.id, new: true};
+            this.dragging_block = { id: block.id };
         
             this.populateChunk(block);
             this.chunk.setCurrentlyDragging(true);
@@ -350,7 +350,6 @@ class VisualController {
                 let height = block.y;
 
                 let overlap = this.calculateOverlap([dropX, dropY], [block.x, block.y]);
-
                 if (overlap > this.overlap_threshold){
                     // indicates a block should be swapped
                     this.swapFromOverlap(block);
