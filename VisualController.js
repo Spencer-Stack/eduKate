@@ -18,6 +18,7 @@ class VisualController {
         this.initializeDragAndDrop();
         this.initializeTabSelection();
         this.initializeActionButtons();
+        this.initialiseMenu();
 
         this.block_size = 100; // Size of the blocks
         this.snap_threshold = 1.5;
@@ -43,12 +44,59 @@ class VisualController {
         this.ver_sel = $('#vertical_selector');
         this.sel_target = null;
         let _this = this;
-        setTimeout(function(){
-            _this.introSequence();
-        }, 50);
+        // setTimeout(function(){
+        //     _this.introSequence();
+        // }, 50);
 
         this.intro_sequence_index = 0;
-        this.continueSequence = true;
+        this.continueSequence = false;
+    }
+
+    initialiseMenu(){
+        let _this = this;
+        const menu = $('#menu-ctn');                   
+        const bars = $('.menu-bars');                   
+        const content = $('#menu-cnt');
+        
+        let firstClick = true;                       
+        let menuClosed = true;
+        
+        let handleMenu = event => {
+            if(!firstClick) {
+                bars.toggleClass('crossed hamburger');
+            } else {
+                bars.addClass('crossed');
+                firstClick = false;
+            }
+            
+            menuClosed = !menuClosed;
+            content.toggleClass('menu-visible');
+            event.stopPropagation();
+            if (content.hasClass('menu-visible')){
+                $("#overlay").fadeIn(300);
+            } else{
+                $("#overlay").fadeOut(300);
+            }
+        };
+
+        menu.on('click', event => {
+            handleMenu(event);
+        });
+        
+        $('body').not('#menu-cnt, #menu-ctn').on('click', event => {
+            if(!menuClosed) handleMenu(event);
+        });
+        
+        $('#menu-cnt, #menu-ctn').on('click', event => event.stopPropagation());
+
+        $('#options_button').on('click', function(e){
+            e.preventDefault(); // stops link doing anything
+            _this.handleOptions();
+        })
+    }
+
+    handleOptions(){
+        console.log('hi');
     }
 
     async load_text_file() {
