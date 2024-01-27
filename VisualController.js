@@ -2,6 +2,7 @@ class VisualController {
     constructor() {
         this.virtual_controller = new VirtualController(this);
         this.logic_controller = null; // gets set by creation of logic controller
+        this.account_controller = null;
         this.workspace = $('#workspace'); // Select the workspace using jQuery
         this.block_id = 0;
         this.blocks = {};
@@ -617,15 +618,14 @@ class VisualController {
             if (_this.continueSequence){
                 return;
             }
-            // Call the logic controller's load function
-            _this.playAnimation();
+            _this.account_controller.populateLoadTable();
         });
 
         $('#save').on('click', function () {
             if (_this.continueSequence){
                 return;
             }
-            // Call the logic controller's save function
+            $('#saveProgramModal').modal('show'); // Hide the modal after saving
         });
     }
 

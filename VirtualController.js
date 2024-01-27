@@ -46,9 +46,11 @@ class VirtualController {
     }
 
     nextLevel(){
-        this.cur_level_index += 1;
-        this.cur_level = this.levels[this.cur_level_index];
-        this.reset();
+        if (this.cur_level_index < this.levels.length - 1){
+            this.cur_level_index += 1;
+            this.cur_level = this.levels[this.cur_level_index];
+            this.reset();
+        }
     }
 
     reset(){

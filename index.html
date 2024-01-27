@@ -4,25 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kate-E</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Datatbale -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css"/>
+    <!-- Custom Styles -->
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/hamburger_styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js" integrity="sha512-EZI2cBcGPnmR89wTgVnN3602Yyi7muWo8y1B3a8WmIv1J9tYG+udH4LvmYjLiGp37yHB7FfaPBo8ly178m9g4Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/MotionPathPlugin.min.js" integrity="sha512-pVHGwTahG9LAcwWilyQ69OcyqPMtf6Jnqp7wdpstT9nf2wLGGlBm0MIe6yI1q+I85+/k7tZb6mFzF5rSD+xZOA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="Chunk.js"></script>
-    <script src="BlockType.js"></script>
-    <script src="TileType.js"></script>
-    <script src="Block.js"></script>
-    <script src="LogicBlock.js"></script>
-    <script src="BlockSet.js"></script>
-    <script src="Loop.js"></script>
-    <script src="VirtualTile.js"></script>
-    <script src="Level.js"></script>
-    <script src="LogicController.js"></script>
-    <script src="VirtualController.js"></script>
-    <script src="VisualController.js"></script>
-    <script src="script.js"></script>
 </head>
 <body>
     <div id="textBubble" class="text-bubble">
@@ -117,5 +107,64 @@
         <div id="grid_house"></div>
         <div id="python_output"></div>
     </div>
+
+    <div class="container" id="programContainer" style="display: none;">
+        <div class="row" id="programGrid">
+            <!-- Program cards will be loaded here -->
+        </div>
+        <div class="container-footer">
+            <button id="closeBtn" class="btn btn-secondary">Close</button>
+        </div>    
+    </div>
+
+    <!-- Save program Modal -->
+    <div class="modal fade" id="saveProgramModal" tabindex="-1" role="dialog" aria-labelledby="saveProgramModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saveProgramModalLabel">Save Program</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="programName">Program Name</label>
+                            <input type="text" class="form-control" id="programName" placeholder="Enter program name">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" id="save_program" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+    
+
+    <script src="Chunk.js"></script>
+    <script src="BlockType.js"></script>
+    <script src="TileType.js"></script>
+    <script src="Block.js"></script>
+    <script src="LogicBlock.js"></script>
+    <script src="BlockSet.js"></script>
+    <script src="Loop.js"></script>
+    <script src="VirtualTile.js"></script>
+    <script src="Level.js"></script>
+    <script src="AccountController.js"></script>
+    <script src="LogicController.js"></script>
+    <script src="VirtualController.js"></script>
+    <script src="VisualController.js"></script>
+    <script src="script.js"></script>
+
 </body>
 </html>
