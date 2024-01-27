@@ -419,8 +419,25 @@ body {
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    min-height: 20%;
+    display: flex; /* Enable Flexbox */
+    flex-direction: column; /* Stack children vertically */
+}
+
+#programGrid {
+    flex-grow: 1; /* Take up all available space */
 }
 
 #programContainer .container-footer {
     text-align: right; /* Align the button to the right */
+    margin-top: auto;
+}
+
+#no_cards{
+    margin: auto;
+    margin-top: 10px;
+    display: none;
+    text-align: center;
+    font-size: 20px;
+    color: black;
 }

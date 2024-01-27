@@ -5,8 +5,6 @@ class AccountController {
         this.programKey = programKey;
         this.vc = visual_controller;
         this.handleEvents();
-        console.log(localStorage.getItem('programs').length);
-        console.log(localStorage.getItem('programs'))
     }
 
     handleEvents(){
@@ -19,9 +17,10 @@ class AccountController {
 
         $(document).mouseup(function(e) {
             var container = $("#programContainer");
-    
-            // if the target of the click isn't the container nor a descendant of the container
-            if (container.is(':visible') && !container.is(e.target) && container.has(e.target).length === 0) {
+            var swalModal = $(".swal2-container");
+        
+            // Check if the program container is visible and the click is outside of it, and also ensure that SweetAlert modal is not active
+            if (container.is(':visible') && !container.is(e.target) && container.has(e.target).length === 0 && swalModal.length === 0) {
                 container.hide();
                 $('#overlay').fadeOut(300);
             }
@@ -44,24 +43,50 @@ class AccountController {
                 real_blocks[id] = block;
             }
 
-            _this.vc.reset(real_blocks, program['snaps'])
+            _this.vc.reset(real_blocks, program['snaps']);
+
+            $('#overlay').fadeOut(300);
+            $("#programContainer").hide();
         });
     
         $(document).on('click', '.delete-btn', function() {
             let card = $(this).closest('.card');
             let str_id = card.attr('id');
             let id = parseInt(str_id.split("_")[1]);
-            let programs = _this.loadProgramsData();
-            delete programs[id];
-            let serial = JSON.stringify(programs);
-            localStorage.setItem(_this.programKey, serial);
-            card.remove();
-            _this.populateLoadTable();
-        });
+        
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let programs = _this.loadProgramsData();
+                    delete programs[id];
+                    let serial = JSON.stringify(programs);
+                    localStorage.setItem(_this.programKey, serial);
+                    card.remove();
+                    _this.populateLoadTable();
+        
+                    Swal.fire(
+                        'Deleted!',
+                        'The program has been deleted.',
+                        'success'
+                    );
+                }
+            });
+        });        
 
         $('#closeBtn').click(function() {
             $('#programContainer').hide();
             $('#overlay').fadeOut(300);
+        });
+
+        $('#saveProgramModal').on('hidden.bs.modal', function (e) {
+            $('#programName').val(null);
         });
     }
 
@@ -103,6 +128,14 @@ class AccountController {
     populateLoadTable() {
         let loaded = this.loadProgramsData();
         let programs = [];
+
+        if (loaded === null || Object.keys(loaded).length === 0){
+            $('#no_cards').css({'display': 'block'});
+            $('#programContainer').show();
+            return;
+        } 
+
+        $('#no_cards').css({'display': 'none'});
         for (var key of Object.keys(loaded)){
             let obj = loaded[key];
             let program = {};
