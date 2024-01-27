@@ -68,7 +68,6 @@ class AccountController {
                     delete programs[id];
                     let serial = JSON.stringify(programs);
                     localStorage.setItem(_this.programKey, serial);
-                    card.remove();
                     _this.populateLoadTable();
         
                     Swal.fire(
@@ -78,7 +77,30 @@ class AccountController {
                     );
                 }
             });
-        });        
+        });
+        
+        $(document).on('click', '#deleteAllBtn', function() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete all programs!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.setItem(_this.programKey, null);
+                    _this.populateLoadTable();
+        
+                    Swal.fire(
+                        'Deleted!',
+                        'All programs have been deleted.',
+                        'success'
+                    );
+                }
+            });
+        });    
 
         $('#closeBtn').click(function() {
             $('#programContainer').hide();
@@ -99,7 +121,6 @@ class AccountController {
                 return JSON.parse(data);
             } catch (e) {
                 // Handle possible JSON parsing errors
-                console.error('Error parsing account data:', e);
                 return this.createDefaultData();
             }
         } else {
@@ -129,6 +150,8 @@ class AccountController {
         let loaded = this.loadProgramsData();
         let programs = [];
 
+        $('#programGrid').empty();
+
         if (loaded === null || Object.keys(loaded).length === 0){
             $('#no_cards').css({'display': 'block'});
             $('#programContainer').show();
@@ -145,7 +168,6 @@ class AccountController {
             programs.push(program);
         }
     
-        $('#programGrid').empty();
         programs.forEach(program => {
             $('#programGrid').append(`
                 <div class="col-md-4">
