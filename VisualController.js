@@ -14,6 +14,7 @@ class VisualController {
 
         // WorkSpace offset vertical
         this.wsov = this.workspace.offset().top;
+        this.wsoh = this.workspace.offset().left;
 
         // Initialize event handlers
         this.initializeDragAndDrop();
@@ -163,6 +164,7 @@ class VisualController {
                         this.continueSequence = false;
                         _this.moveSelTarget(null);
                         $(document).off("click keydown");
+                        this.intro_sequence_index = 0;
                     } else {
                         // Run next event
                         _this.runEvent();
@@ -180,6 +182,7 @@ class VisualController {
             this.text_index += 1;
         } else{
             this.continueSequence = false;
+            this.intro_sequence_index = 0;
             this.hideTextBubble();
         }
     }
@@ -202,6 +205,22 @@ class VisualController {
         this.block_id += 1;
 
         return newBlock;
+    }
+
+    reset(blocks, snaps){
+        this.workspace.empty();
+        this.block_id = Object.keys(blocks).length;
+        this.blocks = blocks;
+        this.dragging_block = null; // Initialize dragging_block to null
+        this.dragging_block_offset = { x: 0, y: 0 }; // Initialize the offset
+        this.chunk = null;
+        this.snapped_connections = snaps;
+
+        for (var key of Object.keys(this.blocks)){
+            let block = this.blocks[key];
+            block.updatePosition(block.x, block.y); // move back by offset
+            this.workspace.append(block.element);
+        }
     }
 
     // Initialize drag and drop behavior
@@ -618,6 +637,7 @@ class VisualController {
             if (_this.continueSequence){
                 return;
             }
+            $("#overlay").fadeIn(300);
             _this.account_controller.populateLoadTable();
         });
 

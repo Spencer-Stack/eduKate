@@ -5,6 +5,8 @@ class AccountController {
         this.programKey = programKey;
         this.vc = visual_controller;
         this.handleEvents();
+        console.log(localStorage.getItem('programs').length);
+        console.log(localStorage.getItem('programs'))
     }
 
     handleEvents(){
@@ -13,6 +15,53 @@ class AccountController {
             var programName = $('#programName').val();
             $('#saveProgramModal').modal('hide');
             _this.saveProgram(_this.vc.snapped_connections, _this.vc.blocks, programName);
+        });
+
+        $(document).mouseup(function(e) {
+            var container = $("#programContainer");
+    
+            // if the target of the click isn't the container nor a descendant of the container
+            if (container.is(':visible') && !container.is(e.target) && container.has(e.target).length === 0) {
+                container.hide();
+                $('#overlay').fadeOut(300);
+            }
+        });
+
+        // Event listeners for load and delete buttons
+        $(document).on('click', '.load-btn', function() {
+            // Load program logic
+            let str_id = $(this).closest('.card').attr('id');
+            let id = parseInt(str_id.split("_")[1]);
+            let program = _this.loadProgramsData()[id];
+            
+            let obj_blocks = program['blocks'];
+            let real_blocks = {};
+            for (var key of Object.keys(obj_blocks)){
+                let id = parseInt(key);
+                let obj_block = obj_blocks[key];
+                let block_type = new BlockType(obj_block['block_type']['name']);
+                let block = new Block(id, block_type, obj_block['tab'], _this.vc, obj_block['x'], obj_block['y']);
+                real_blocks[id] = block;
+            }
+
+            _this.vc.reset(real_blocks, program['snaps'])
+        });
+    
+        $(document).on('click', '.delete-btn', function() {
+            let card = $(this).closest('.card');
+            let str_id = card.attr('id');
+            let id = parseInt(str_id.split("_")[1]);
+            let programs = _this.loadProgramsData();
+            delete programs[id];
+            let serial = JSON.stringify(programs);
+            localStorage.setItem(_this.programKey, serial);
+            card.remove();
+            _this.populateLoadTable();
+        });
+
+        $('#closeBtn').click(function() {
+            $('#programContainer').hide();
+            $('#overlay').fadeOut(300);
         });
     }
 
@@ -49,11 +98,9 @@ class AccountController {
         var year = date.getFullYear();
     
         return day.slice(-2) + ' ' + month + ' ' + year + ', ' + hours + ':' + minutes + ampm;
-    }
-    
+    } 
 
     populateLoadTable() {
-        let _this = this;
         let loaded = this.loadProgramsData();
         let programs = [];
         for (var key of Object.keys(loaded)){
@@ -62,11 +109,9 @@ class AccountController {
             program['id'] = key;
             program['name'] = obj['meta']['name'];
             program['time'] = this.convertEpochToFormattedDate(obj['meta']['time']);
-            console.log(obj, program);
             programs.push(program);
         }
     
-        $("#overlay").fadeIn(300);
         $('#programGrid').empty();
         programs.forEach(program => {
             $('#programGrid').append(`
@@ -86,37 +131,6 @@ class AccountController {
         });
 
         $('#programContainer').show();
-
-        $('#closeBtn').click(function() {
-            $('#programContainer').hide();
-            $('#overlay').fadeOut(300);
-        });
-    
-        $(document).mouseup(function(e) {
-            var container = $("#programContainer");
-    
-            // if the target of the click isn't the container nor a descendant of the container
-            if (!container.is(e.target) && container.has(e.target).length === 0) {
-                container.hide();
-                $('#overlay').fadeOut(300);
-            }
-        });
-    
-        // Event listeners for load and delete buttons
-        $(document).on('click', '.load-btn', function() {
-            // Load program logic
-            let str_id = $(this).closest('.card').attr('id');
-            let id = parseInt(str_id.split("_")[1]);
-            let program = _this.loadProgramsData()[id];
-            console.log(program);
-        });
-    
-        $(document).on('click', '.delete-btn', function() {
-            // Delete program logic
-            if (confirm("Are you sure you want to delete this program?")) {
-                $(this).closest('.col-md-4').remove();
-            }
-        });
     }
     
     loadProgramsData() {
@@ -127,7 +141,7 @@ class AccountController {
 
     stripCircular(blocks){
         let propertiesToKeep = ['id', 'block_type', 'tab', 'x', 'y'];
-        let cleaned = [];
+        let cleaned = {};
         for (var key of Object.keys(blocks)) {
             let block = blocks[key];
             let cleanedBlock = {};
@@ -137,7 +151,7 @@ class AccountController {
                 }
             });
     
-            cleaned.push(cleanedBlock);
+            cleaned[key] = cleanedBlock;
         }
         return cleaned;
     }
@@ -149,7 +163,9 @@ class AccountController {
 
         let new_blocks = this.stripCircular(blocks);
         let programs = this.loadProgramsData();
-        if (programs == null){
+
+        // check if programs is null (upon first loading) or {} (upon removing last save)
+        if (programs === null || Object.keys(programs).length === 0){
             let obj = {0: {'snaps': snaps, 'blocks': new_blocks, 'meta': meta}};
             let serial = JSON.stringify(obj);
             localStorage.setItem(this.programKey, serial);

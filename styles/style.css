@@ -123,8 +123,17 @@ body {
     z-index: 10;
 }
 
-.flash_transition {
-    transform: rotate3d(0, 1, 0, 360deg);
+@keyframes rotate360 {
+    from {
+        transform: rotate3d(0, 1, 0, 0deg);
+    }
+    to {
+        transform: rotate3d(0, 1, 0, 360deg);
+    }
+}
+
+.rotating {
+    animation: rotate360 0.3s linear forwards;
 }
 
 /* TODO fix when expanding, thes block moving back is a bit weird */

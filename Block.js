@@ -77,10 +77,9 @@ class Block {
     }
 
     flash(){
-        $(this.element).toggleClass("flash_transition");
-        setTimeout(function() {
-          $(this.element).toggleClass("flash_transition");
-        }, 1000);
+        $(this.element).addClass('rotating').on('animationend', function() {
+            $(this).removeClass('rotating');
+        });
     }
 
     setCurrentlyDragging(dragging){
