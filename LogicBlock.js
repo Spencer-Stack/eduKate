@@ -35,22 +35,19 @@ class LogicBlock {
         } else if (this.block_type.name == "move_left"){
             result = controllers.virtual_controller.moveBaby('left');
         } else if (this.block_type.name == "stop"){
-            controllers.logic_controller.stopExecution();
-            controllers.visual_controller.setConsole("The program was stopped by a block");
+            controllers.logic_controller.stopExecution("stop_block");
         }
 
         this.visualBlock.flash();
         
         // the result was bad (in this case, for the baby hitting a wall, but should be much more)
         if (!result){
-            controllers.logic_controller.stopExecution();
-            controllers.visual_controller.setConsole("The baby has bumped into a wall", false);
-            return;
+            controllers.logic_controller.stopExecution("hit_something");
         }
 
         // Call the callback after a one-second delay
         setTimeout(() => {
             callback();
-        }, 1000); // Delay of 1000 milliseconds (1 second)
+        }, 1000);
     }
 }

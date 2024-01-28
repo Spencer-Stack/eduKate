@@ -593,6 +593,17 @@ class VisualController {
         $('.block[data-tab="' + selectedTab + '"]').show();
     }
 
+    showInfoAlert(message) {
+        Swal.fire({
+            title: 'Information',
+            text: message,
+            icon: 'info', // Use 'info' for informational messages
+            showCancelButton: false, // No cancel button for info alerts
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+        });
+    }
+
     // Initialize action buttons
     initializeActionButtons() {
         let _this = this;
@@ -615,13 +626,17 @@ class VisualController {
             _this.logic_controller.reset();
             _this.virtual_controller.reset();
             _this.setConsole("");
-            _this.logic_controller.parseVisual(_this.blocks, _this.snapped_connections);
+            let parse_result = _this.logic_controller.parseVisual(_this.blocks, _this.snapped_connections);
             let controllers = {
                 'visual_controller': _this,
                 'virtual_controller': _this.virtual_controller,
                 'logic_controller': _this.logic_controller
             };
-            _this.logic_controller.execute(controllers);
+            if (parse_result["res"]){
+                _this.logic_controller.execute(controllers);
+            } else{
+                _this.showInfoAlert(parse_result['text']);
+            }
         });
 
         $('#stop').on('click', function () {
@@ -629,8 +644,7 @@ class VisualController {
                 return;
             }
             // Call the logic controller's stop function
-            _this.logic_controller.stopExecution();
-            _this.setConsole("Program was stopped by you");
+            _this.logic_controller.stopExecution("user_stop");
         });
 
         $('#load').on('click', function () {

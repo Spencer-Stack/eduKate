@@ -89,6 +89,12 @@ body {
     background-color: #7d545e;
 }
 
+#run:disabled, #stop:disabled{
+    cursor: not-allowed;
+    background-color: var(--dark_pink);
+    user-select: none;
+}
+
 .block-display {
     display: flex;
     justify-content: left;
@@ -133,7 +139,7 @@ body {
 }
 
 .rotating {
-    animation: rotate360 0.3s linear forwards;
+    animation: rotate360 0.6s linear forwards;
 }
 
 /* TODO fix when expanding, thes block moving back is a bit weird */

@@ -2,9 +2,9 @@
 // A blockset is a set of blocks that are apart of the same piece of functionality (main, func, if, loop, etc)
 
 class LogicController {
-    constructor(virtual_controller) {
+    constructor(visual_controller) {
         this.blocks = {}; // logic blocks, indexed by id (unordered, as opposed to the blockSet)
-        this.virtual_controller = virtual_controller;
+        this.visual_controller = visual_controller;
         // main block set is the block set that contains all blocks in the program
         this.block_set = new BlockSet();
         this.all_block_set_hosts = [];
@@ -15,15 +15,30 @@ class LogicController {
     }
 
     execute(controllers){
+        $('#run').prop('disabled', true);
+        $('#stop').prop('disabled', false);
         this.block_set.execute(controllers, () => {
             if (this.block_set.executing){
-                controllers.visual_controller.setConsole("Program run successfully");
+                this.stopExecution("run_success");
             }
         });
     }
 
-    stopExecution(){
+    stopExecution(reason){
         this.block_set.stopExecution();
+        if (reason == "hit_something"){
+            this.visual_controller.setConsole("The baby bumped into a wall!", false);
+        } else if (reason == "stop_block"){
+            this.visual_controller.setConsole("The program was stopped by a stop block");
+        } else if (reason == "complete_level"){
+            this.visual_controller.setConsole("The baby completed the level!");
+        } else if (reason == "user_stop"){
+            this.visual_controller.setConsole("You have stopped the program");
+        } else if (reason == "run_success"){
+            this.visual_controller.setConsole("The program ran successfully");
+        }
+        $('#stop').prop('disabled', true);
+        $('#run').prop('disabled', false);
     }
 
     // checks to see if a block needs to pop or push new blocksets
@@ -81,22 +96,19 @@ class LogicController {
             }
 
             if (running_loop_count < 0){
-                alert("There is a loop finish block incorrectly before a loop start block");
-                return false;
+                return {'res': false, 'text': "There is a loop finish block incorrectly before a loop start block"};
             }
         }
 
         if (running_loop_count > 0){
-            alert("There are more loop start blocks that loop finish blocks");
-            return false;
+            return {'res': false, 'text': "There are more loop start blocks that loop finish blocks"};
         }
 
-        return true;
+        return {"res": true};
     }
 
     // given a list of visual blocks and their snaps, build out all of the blocksets and logic blocks
     parseVisual(blocks, snaps){
-        console.log(blocks, snaps);
         // this is a list of blocksets, they act as scopes for blocks
         // when a start loop or if statement is reached, we go into another blockset
         // when it ends, the block set is popped back out of
@@ -114,13 +126,12 @@ class LogicController {
         });
 
         if (start_block == null){
-            alert("no start block found");
-            return;
+            return {'res': false, 'text': "No start block found"};
         }
 
         let loops_fine = this.loopCheck(start_block.id, blocks, snaps);
-        if (!loops_fine){
-            return;
+        if (!loops_fine['res']){
+            return loops_fine;
         }
 
         let dont_add = ["start_loop", "end_loop"];
@@ -176,6 +187,6 @@ class LogicController {
             }
         });
 
-        // this now leaves with a nice structure, where execution is left to right
+        return {"res": true};
     }
 }
