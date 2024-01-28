@@ -153,6 +153,7 @@ class LogicController {
             if (!dont_add.includes(logic_block.block_type.name)){
                 cur_block_set_host.addBlock(logic_block);
             } else if (logic_block.block_type.name == "start_loop"){
+                cur_block_set_host.setLoopCount(logic_block.visualBlock.getLoopCount());
                 let level_above = block_sets[block_sets.length - 2];
                 level_above.addBlock(cur_block_set_host) // add the cur host
             }

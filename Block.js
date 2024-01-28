@@ -37,11 +37,31 @@ class Block {
             .attr('src', this.block_type.img_path)
             .attr('alt', "Nuh uh")
             .attr('draggable', false)
-            .addClass('block_image')
+            .addClass('block_image');
+
+        let slide_element = null;
+        if (this.block_type.name == "start_loop"){
+            slide_element = $('<div>', { class: 'slider' });
+
+            // Add notches to the slider
+            for (var i = 0; i < 5; i++) {
+                slide_element.append($('<div>', { class: 'notch' }));
+            }
+
+            // Add the arrow to the slider
+            var arrow = $('<div>', { class: 'loop_arrow' });
+            slide_element.append(arrow);
+
+            blockElement.append(slide_element);
+        }
 
         blockElement.append(imageElement);
 
         blockElement.on('mousedown', (event) => {
+            // ignore if slider is pressed
+            if ($(event.target).hasClass('slider') || $(event.target).closest('.slider').length > 0) {
+                return;
+            }
             this.visualController.dragging_block_offset.x = event.clientX - this.x;
             this.visualController.dragging_block_offset.y = event.clientY - this.y;
 
@@ -96,5 +116,24 @@ class Block {
         } else{
             this.element.removeClass('with-transition');
         }
+    }
+
+    // if the block is a loop, get its loop count value
+    getLoopCount() {
+        let arrow = $(this.element).find('.loop_arrow');
+        let slider = $(this.element).find('.slider');
+
+        var closestNotchIndex = -1; // Initializing to an invalid index
+        var closestDist = Infinity;
+        slider.find('.notch').each(function(index) {
+            var notchLeft = $(this).position().left;
+            var dist = Math.abs(arrow.position().left - notchLeft);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestNotchIndex = index; // Save the index of the closest notch
+            }
+        });
+
+        return closestNotchIndex + 1;
     }
 }

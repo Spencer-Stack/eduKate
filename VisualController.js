@@ -21,6 +21,7 @@ class VisualController {
         this.initializeTabSelection();
         this.initializeActionButtons();
         this.initialiseMenu();
+        this.initialiseLoopSliders();
 
         this.block_size = 100; // Size of the blocks
         this.snap_threshold = 1.5;
@@ -52,7 +53,68 @@ class VisualController {
 
         this.intro_sequence_index = 0;
         this.continueSequence = false;
+
+        // for loop sliders
+        this.loop_arrow_off = 10;
     }
+
+    initialiseLoopSliders() {
+        let _this = this;
+        var isMouseDown = false;
+        var arrow = null;
+    
+        // Assuming 'document' is the parent element that exists when initialiseLoopSliders is called
+        $(document).on('mousedown', '.slider', function(event) {
+            console.log('mousedown here');
+            event.stopPropagation();
+            // Set the flag and find the arrow
+            isMouseDown = true;
+            arrow = $(this).find('.loop_arrow');
+    
+            // Move the arrow to the nearest notch
+            moveArrowToNearestNotch(event.pageX, $(this));
+        });
+    
+        $(document).on('mousemove', '.slider', function(event) {
+            // Check if the mouse is down and moving
+            if (isMouseDown && arrow) {
+                // Move the arrow to the nearest notch
+                moveArrowToNearestNotch(event.pageX, $(this));
+            }
+        });
+    
+        $(document).on('mouseup', '.slider', function() {
+            // Reset the flag when mouse is released
+            isMouseDown = false;
+            arrow = null;
+        });
+    
+        $(document).on('mouseleave', '.slider', function() {
+            // Reset the flag when mouse leaves the slider area
+            isMouseDown = false;
+            arrow = null;
+        });
+    
+        function moveArrowToNearestNotch(pageX, slider) {
+            // Find the closest notch
+            var closest = null;
+            var closestDist = Infinity;
+            slider.find('.notch').each(function() {
+                var notchLeft = $(this).position().left;
+                var dist = Math.abs(pageX - slider.offset().left - notchLeft);
+                if (dist < closestDist) {
+                    closest = $(this);
+                    closestDist = dist;
+                }
+            });
+    
+            // Set the arrow's position to the closest notch
+            if (closest) {
+                var newArrowPosition = closest.position().left - _this.loop_arrow_off;
+                arrow.css('left', newArrowPosition + 'px');
+            }
+        }
+    }    
 
     initialiseMenu(){
         let _this = this;

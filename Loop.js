@@ -1,7 +1,7 @@
 class Loop {
     constructor() {
         this.block_set = new BlockSet();
-        this.loop_count = 3; // Change the number of loop iterations as needed
+        this.loop_count = null;
         this.executing = true;
     }
 
@@ -37,5 +37,9 @@ class Loop {
 
     setStart(start) {
         this.block_set.setStart(start);
+    }
+
+    setLoopCount(count){
+        this.loop_count = count;
     }
 }
