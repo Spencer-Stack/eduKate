@@ -24,6 +24,18 @@ class VirtualController {
         $(':root').css('--tile_cols', this.grid_n);
     }
 
+    getCurLevel(){
+        let account = localStorage.getItem('account');
+        if (account == null){
+            this.cur_level_index = 0;
+            return this.levels[0];
+        } else{
+            account = JSON.parse(account);
+            this.cur_level_index = parseInt(account['level']) - 1;
+            return this.levels[this.cur_level_index];
+        }
+    }
+
     initialiseLevels() {
         // Return a new Promise
         return new Promise(async (resolve, reject) => {
@@ -31,8 +43,10 @@ class VirtualController {
                 let level_1 = await Level.create(1, 0, 1); // Await the Promise returned by Level.create
                 let level_2 = await Level.create(2, 0, 2);
                 let level_3 = await Level.create(3, 0, 0);
-                this.levels = [level_1, level_2, level_3];
-                this.cur_level = level_1;
+                let level_4 = await Level.create(4, 0, 0);
+                this.levels = [level_1, level_2, level_3, level_4];
+                this.cur_level = this.getCurLevel();
+                this.visual_controller.setLevelText(this.cur_level_index + 1);
                 this.baby_x = this.cur_level.doll_start_x;
                 this.baby_y = this.cur_level.doll_start_y;
                 this.default_grid = this.cur_level.default_grid;
@@ -50,6 +64,18 @@ class VirtualController {
             this.cur_level_index += 1;
             this.cur_level = this.levels[this.cur_level_index];
             this.reset();
+            this.visual_controller.account_controller.setCurrentLevel(this.cur_level_index + 1);
+            this.visual_controller.setLevelText(this.cur_level_index + 1);
+        }
+    }
+
+    previousLevel(){
+        if (this.cur_level_index > 0){
+            this.cur_level_index -= 1;
+            this.cur_level = this.levels[this.cur_level_index];
+            this.reset();
+            this.visual_controller.account_controller.setCurrentLevel(this.cur_level_index + 1);
+            this.visual_controller.setLevelText(this.cur_level_index + 1);
         }
     }
 

@@ -5,6 +5,7 @@ class AccountController {
         this.programKey = programKey;
         this.vc = visual_controller;
         this.handleEvents();
+        console.log(this.loadAccountData());
     }
 
     handleEvents(){
@@ -39,7 +40,7 @@ class AccountController {
                 let id = parseInt(key);
                 let obj_block = obj_blocks[key];
                 let block_type = new BlockType(obj_block['block_type']['name']);
-                let block = new Block(id, block_type, obj_block['tab'], _this.vc, obj_block['x'], obj_block['y']);
+                let block = new Block(id, block_type, obj_block['tab'], _this.vc, obj_block['x'], obj_block['y'], obj_block['loop_count']);
                 real_blocks[id] = block;
             }
 
@@ -195,10 +196,13 @@ class AccountController {
     }
 
     stripCircular(blocks){
-        let propertiesToKeep = ['id', 'block_type', 'tab', 'x', 'y'];
+        let propertiesToKeep = ['id', 'block_type', 'tab', 'x', 'y', 'loop_count'];
         let cleaned = {};
         for (var key of Object.keys(blocks)) {
             let block = blocks[key];
+            if (block.block_type.name == "start_loop"){
+                block.getLoopCount();
+            }
             let cleanedBlock = {};
             propertiesToKeep.forEach(prop => {
                 if (block.hasOwnProperty(prop)) {
@@ -236,9 +240,14 @@ class AccountController {
     createDefaultData() {
         return {
             has_seen_intro: false,
-            level: 1,
-            program_count: 0
+            level: 1
         };
+    }
+
+    setCurrentLevel(level){
+        let data = this.loadAccountData();
+        data.level = level;
+        localStorage.setItem(this.accountKey, JSON.stringify(data));
     }
 
     saveAccountData() {

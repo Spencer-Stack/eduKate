@@ -22,6 +22,7 @@ class VisualController {
         this.initializeActionButtons();
         this.initialiseMenu();
         this.initialiseLoopSliders();
+        this.initialiseLevelSelect();
 
         this.block_size = 100; // Size of the blocks
         this.snap_threshold = 1.5;
@@ -58,6 +59,16 @@ class VisualController {
         this.loop_arrow_off = 10;
     }
 
+    initialiseLevelSelect() {
+        let _this = this;
+        $(document).on('click', '.left-arrow', function(){
+            _this.virtual_controller.previousLevel();
+        });
+        $(document).on('click', '.right-arrow', function(){
+            _this.virtual_controller.nextLevel();
+        });
+    }
+
     initialiseLoopSliders() {
         let _this = this;
         var isMouseDown = false;
@@ -65,7 +76,6 @@ class VisualController {
     
         // Assuming 'document' is the parent element that exists when initialiseLoopSliders is called
         $(document).on('mousedown', '.slider', function(event) {
-            console.log('mousedown here');
             event.stopPropagation();
             // Set the flag and find the arrow
             isMouseDown = true;
@@ -161,6 +171,10 @@ class VisualController {
 
     handleOptions(){
         console.log('hi');
+    }
+
+    setLevelText(level){
+        $('#level_text').text("Level " + level);
     }
 
     async load_text_file() {

@@ -1,6 +1,6 @@
 // this is the visualBlock used by the visualController
 class Block {
-    constructor(id, block_type, tab, vc, x = 0, y = 0) {
+    constructor(id, block_type, tab, vc, x = 0, y = 0, loop_count=null) {
         this.id = id;
         this.block_type = block_type;
         this.tab = tab;
@@ -9,6 +9,13 @@ class Block {
         this.y = y;                // Initial y coordinate
         this.element = this.createBlockElement();
         this.was_last_moved = false;
+        this.loop_count = loop_count;
+        let _this = this;
+        if (loop_count != null){
+            setTimeout(function(){
+                _this.moveLoopArrow();
+            }, 10)
+        }
     }
 
     setLastMoved(moved){
@@ -44,7 +51,7 @@ class Block {
             slide_element = $('<div>', { class: 'slider' });
 
             // Add notches to the slider
-            for (var i = 0; i < 5; i++) {
+            for (var i = 0; i < 7; i++) {
                 slide_element.append($('<div>', { class: 'notch' }));
             }
 
@@ -127,13 +134,28 @@ class Block {
         var closestDist = Infinity;
         slider.find('.notch').each(function(index) {
             var notchLeft = $(this).position().left;
-            var dist = Math.abs(arrow.position().left - notchLeft);
+            var dist = Math.abs(arrow.position().left + 10 - notchLeft);
             if (dist < closestDist) {
                 closestDist = dist;
                 closestNotchIndex = index; // Save the index of the closest notch
             }
         });
 
+        this.loop_count = closestNotchIndex + 1;
+
         return closestNotchIndex + 1;
+    }
+
+    moveLoopArrow(){
+        let _this = this;
+        let slider = $(this.element).find('.slider');
+        let arrow = slider.find('.loop_arrow');
+        
+        slider.find('.notch').each(function(index) {
+            if (index == _this.loop_count - 1){
+                var newArrowPosition = $(this).position().left - 10;
+                arrow.css('left', newArrowPosition + 'px');
+            }
+        });
     }
 }
