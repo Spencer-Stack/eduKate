@@ -6,4 +6,5 @@ $(document).ready(function (){
     const accountController = new AccountController('account', 'programs', visualController);    
     visualController.logic_controller = logicController;
     visualController.account_controller = accountController;
+    visualController.setOptions();
 });

@@ -22,7 +22,7 @@ a {
 #menu-cnt {
     z-index: 12;
     position: absolute;
-    left: calc(-10% - (var(--hamburger_width) + 30px));  /* Start off-screen */
+    left: calc(-20% - (var(--hamburger_width) + 30px));  /* Start off-screen */
     padding-left: calc(var(--hamburger_width) + 30px);
     padding-top: 20px;
     padding-bottom: 20px;

@@ -25,12 +25,11 @@ class VirtualController {
     }
 
     getCurLevel(){
-        let account = localStorage.getItem('account');
+        let account = this.visual_controller.account_controller.loadAccountData();
         if (account == null){
             this.cur_level_index = 0;
             return this.levels[0];
         } else{
-            account = JSON.parse(account);
             this.cur_level_index = parseInt(account['level']) - 1;
             return this.levels[this.cur_level_index];
         }

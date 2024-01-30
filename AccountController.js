@@ -114,7 +114,7 @@ class AccountController {
 
     loadAccountData() {
         // Load account data from localStorage
-        const data = localStorage.getItem(this.storageKey);
+        const data = localStorage.getItem(this.accountKey);
         if (data) {
             try {
                 // Parse the JSON string back to an object
@@ -239,7 +239,8 @@ class AccountController {
     createDefaultData() {
         return {
             has_seen_intro: false,
-            level: 1
+            level: 1,
+            execution_speed: 1000
         };
     }
 
@@ -249,15 +250,9 @@ class AccountController {
         localStorage.setItem(this.accountKey, JSON.stringify(data));
     }
 
-    saveAccountData() {
-        // Convert account data to JSON string and save in localStorage
-        localStorage.setItem(this.storageKey, JSON.stringify(this.accountData));
-    }
-
-    updateData(updates) {
-        // Update account data
-        Object.assign(this.accountData, updates);
-        // Save updated data to localStorage
-        this.saveAccountData();
+    setExecutionSpeed(speed){
+        let data = this.loadAccountData();
+        data.execution_speed = speed;
+        localStorage.setItem(this.accountKey, JSON.stringify(data));
     }
 }

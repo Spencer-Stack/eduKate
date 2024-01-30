@@ -23,6 +23,7 @@ class VisualController {
         this.initialiseMenu();
         this.initialiseLoopSliders();
         this.initialiseLevelSelect();
+        this.initialiseOptionsModal();
 
         this.block_size = 100; // Size of the blocks
         this.snap_threshold = 1.5;
@@ -60,6 +61,26 @@ class VisualController {
 
         // for invisible block
         this.invisible_width = this.workspace.width();
+    }
+
+    // called upon load of page to update all the saved settings
+    setOptions(){
+        let data = this.account_controller.loadAccountData();
+        this.setExecutionSpeed(data.execution_speed);
+    }
+
+    setExecutionSpeed(speed){
+        LogicBlock.execute_time = speed;
+        $(':root').css('--play_speed', speed + "ms");
+        this.account_controller.setExecutionSpeed(speed);
+        $('#execution-speed-value').text(speed);
+    }
+
+    initialiseOptionsModal(){
+        let _this = this;
+        $('#execution-speed').on('input change', function() {
+            _this.setExecutionSpeed($(this).val());
+        });
     }
 
     initialiseLevelSelect() {
@@ -161,7 +182,9 @@ class VisualController {
         });
         
         $('body').not('#menu-cnt, #menu-ctn').on('click', event => {
-            if(!menuClosed) handleMenu(event);
+            if(!menuClosed && !$('body').hasClass('modal-open')) {
+                handleMenu(event);
+            }
         });
         
         $('#menu-cnt, #menu-ctn').on('click', event => event.stopPropagation());
@@ -173,7 +196,9 @@ class VisualController {
     }
 
     handleOptions(){
-        console.log('hi');
+        $('#settingsModal').modal('show');
+        let data = this.account_controller.loadAccountData();
+        $('#execution-speed').val(data.execution_speed);
     }
 
     // whenever a block is dropped, change the invisible element width to be an extra 50px on the right of that block

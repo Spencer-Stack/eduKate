@@ -1,5 +1,6 @@
 // logic blocks are created when the visual blocks are parsed by the visual controller
 class LogicBlock {
+    static execute_time = 1000;
     // basically double linked list for blocks
     constructor(id, visualBlock, next, prev, type) {
         this.id = id;
@@ -48,6 +49,6 @@ class LogicBlock {
         // Call the callback after a one-second delay
         setTimeout(() => {
             callback();
-        }, 1000);
+        }, LogicBlock.execute_time);
     }
 }

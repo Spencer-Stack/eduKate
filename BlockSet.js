@@ -4,7 +4,6 @@ class BlockSet {
         this.next = null;
         this.start = null;
         this.end = null;
-        this.block_exec_delay = 1000;
         this.executing = true;
     }
 
