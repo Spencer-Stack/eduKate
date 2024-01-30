@@ -57,6 +57,9 @@ class VisualController {
 
         // for loop sliders
         this.loop_arrow_off = 10;
+
+        // for invisible block
+        this.invisible_width = this.workspace.width();
     }
 
     initialiseLevelSelect() {
@@ -173,6 +176,21 @@ class VisualController {
         console.log('hi');
     }
 
+    // whenever a block is dropped, change the invisible element width to be an extra 50px on the right of that block
+    resizeWorkspace(){
+        let spacing = 200; // 50 px extra
+        let max_width = this.invisible_width;
+        for (var key of Object.keys(this.blocks)){
+            let block = this.blocks[key];
+            let x = block.x + this.block_size + spacing;
+            if (x > max_width){
+                max_width = x;
+            }
+        }
+        this.invisible_width = max_width;
+        $('#fake_invisible').css({'width': max_width + "px"});
+    }
+
     setLevelText(level){
         $('#level_text').text("Level " + level);
     }
@@ -269,7 +287,10 @@ class VisualController {
         blockType = new BlockType(blockType); // name of the blocktype
         const newBlock = new Block(this.block_id, blockType, blockTab, this);
 
-        newBlock.updatePosition(x - this.dragging_block_offset.x, y - this.dragging_block_offset.y);
+        let u_x = x - this.dragging_block_offset.x - this.wsoh + this.workspace.scrollLeft();
+        let u_y = y - this.dragging_block_offset.y - this.wsov;
+
+        newBlock.updatePosition(u_x, u_y);
 
         this.blocks[this.block_id] = newBlock;
 
@@ -284,7 +305,7 @@ class VisualController {
     }
 
     reset(blocks, snaps){
-        this.workspace.empty();
+        this.workspace.children().not('#fake_invisible').remove();
         this.block_id = Object.keys(blocks).length;
         this.blocks = blocks;
         this.dragging_block = null; // Initialize dragging_block to null
@@ -297,6 +318,8 @@ class VisualController {
             block.updatePosition(block.x, block.y); // move back by offset
             this.workspace.append(block.element);
         }
+
+        this.resizeWorkspace();
     }
 
     // Initialize drag and drop behavior
@@ -314,6 +337,7 @@ class VisualController {
                     this.deleteChunk();
                     this.dragging_block = null;
                     this.dragging_block_offset = { x: 0, y: 0 };
+                    this.resizeWorkspace();
                 }
             }
         });
@@ -324,8 +348,14 @@ class VisualController {
 
             if (this.dragging_block) {
                 // Calculate the drop position based on the offset
-                const dropX = event.clientX - this.dragging_block_offset.x;
-                const dropY = event.clientY - this.dragging_block_offset.y;
+                let dropX = event.pageX - this.dragging_block_offset.x;
+                let dropY = event.pageY - this.dragging_block_offset.y;
+
+                if (this.dragging_block.new){
+                    // if its new, subtract the offset
+                    dropX = dropX - this.wsoh + this.workspace.scrollLeft();
+                    dropY -= this.wsov;
+                }
 
                 //check need new in dragging block
 
@@ -350,8 +380,8 @@ class VisualController {
             }
 
             const offset = $(target).offset();
-            _this.dragging_block_offset.x = event.clientX - offset.left;
-            _this.dragging_block_offset.y = event.clientY - offset.top;
+            _this.dragging_block_offset.x = event.pageX - offset.left;
+            _this.dragging_block_offset.y = event.pageY - offset.top;
 
             const blockTab = $(target).data('tab');
             const blockType = $(target).data('block_type');
@@ -359,7 +389,7 @@ class VisualController {
             let block = this.createBlock(blockType, blockTab, event.pageX, event.pageY);
 
             // Set the dragging_block to the current block
-            this.dragging_block = { id: block.id };
+            this.dragging_block = { id: block.id, new: true };
         
             this.populateChunk(block);
             this.chunk.setCurrentlyDragging(true);
@@ -371,7 +401,16 @@ class VisualController {
                 return;
             }
             if (_this.dragging_block){
-                _this.chunk.head.updatePosition(e.pageX - _this.dragging_block_offset.x, e.pageY - _this.dragging_block_offset.y);
+                let x = e.pageX - _this.dragging_block_offset.x;
+                let y = e.pageY - _this.dragging_block_offset.y;
+
+                if (_this.dragging_block.new){
+                    // if its new, subtract the offset
+                    x = x - _this.wsoh + _this.workspace.scrollLeft();
+                    y -= _this.wsov;
+                }
+
+                _this.chunk.head.updatePosition(x, y);
                 _this.chunk.move(_this.block_size + _this.block_hor_offset);
             }
         });
@@ -633,6 +672,8 @@ class VisualController {
         } else{
             this.handleSnap(left_overlap, right_overlap);
         }
+
+        this.resizeWorkspace();
     }
 
     // shift blocks across whenever one is inserted between two blocks

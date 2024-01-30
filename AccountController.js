@@ -5,7 +5,6 @@ class AccountController {
         this.programKey = programKey;
         this.vc = visual_controller;
         this.handleEvents();
-        console.log(this.loadAccountData());
     }
 
     handleEvents(){

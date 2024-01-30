@@ -5,7 +5,7 @@ class Block {
         this.block_type = block_type;
         this.tab = tab;
         this.visualController = vc; // Reference to the VisualController
-        this.x = x;                // Initial x coordinate
+        this.x = x;                // offset into the workspace position
         this.y = y;                // Initial y coordinate
         this.element = this.createBlockElement();
         this.was_last_moved = false;
@@ -69,10 +69,10 @@ class Block {
             if ($(event.target).hasClass('slider') || $(event.target).closest('.slider').length > 0) {
                 return;
             }
-            this.visualController.dragging_block_offset.x = event.clientX - this.x;
-            this.visualController.dragging_block_offset.y = event.clientY - this.y;
+            this.visualController.dragging_block_offset.x = event.pageX - this.x;
+            this.visualController.dragging_block_offset.y = event.pageY - this.y;
 
-            this.visualController.dragging_block = { id: this.id };
+            this.visualController.dragging_block = { id: this.id, new: false };
             // here, have to construct chunk and remove from snaps etc
             this.visualController.handleInsideBlockMove(this);
         });
@@ -82,24 +82,22 @@ class Block {
 
     // Method to update the block's position
     updatePosition(left, top) {
-        let offset = this.visualController.workspace.offset();
-        this.x = left;
         this.y = top;
+        this.x = left;
         this.element.css({
-            left: this.x - offset.left + 'px',
-            top: this.y - this.visualController.wsov + 'px', // offset by the original offset, not what it is now
+            left: left + 'px',
+            top: top + 'px'
         });
     }
 
     shiftBlock(amount, dir) {
-        let offset = this.visualController.workspace.offset();
         if (dir == "right"){
             this.x += amount;
         } else{
             this.x -= amount;
         }
         this.element.css({
-            left: this.x - offset.left + 'px',
+            left: this.x + 'px',
         });
     }
 
