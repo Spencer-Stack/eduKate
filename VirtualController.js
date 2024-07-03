@@ -111,7 +111,7 @@ class VirtualController {
     }
 
     // this shakes the image of the baby to indicate something went wrong
-    babyShake() {
+    shakeBaby() {
         var $img = $('#grid_house');
         var degrees = [10, -10, 10, -10, 5, -5, 0]; // Degrees for rotation
         var duration = 50; // Duration for each rotation
@@ -191,28 +191,28 @@ class VirtualController {
             if (this.baby_x > 0 && this.checkBabyPosition(this.baby_x - 1, this.baby_y)){
                 this.baby_x -= 1;
             } else{
-                this.babyShake();
+                this.shakeBaby();
                 return false;
             }
         } else if (dir == "right"){
             if (this.baby_x < this.grid_n - 1 && this.checkBabyPosition(this.baby_x + 1, this.baby_y)){
                 this.baby_x += 1;
             } else{
-                this.babyShake();
+                this.shakeBaby();
                 return false;
             }
         } else if (dir == "down"){
             if (this.baby_y < this.grid_n - 1 && this.checkBabyPosition(this.baby_x, this.baby_y + 1)){
                 this.baby_y += 1;
             } else{
-                this.babyShake();
+                this.shakeBaby();
                 return false;
             }
         } else if (dir == "up"){
             if (this.baby_y > 0 && this.checkBabyPosition(this.baby_x, this.baby_y - 1)){
                 this.baby_y -= 1;
             } else{
-                this.babyShake();
+                this.shakeBaby();
                 return false;
             }
         }
